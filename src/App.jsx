@@ -7,8 +7,6 @@ import './App.css'
 
 function App() {
   
-  // ตัวแปร หรือ ฟังก์ชันที่นี้
-
   return (
     <>
       
