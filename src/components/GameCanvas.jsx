@@ -35,7 +35,7 @@ function GameCanvas() {
       id="myCanvas"
       width="600"
       height="600"
-      style={{ border: "5px solid pink" }}
+      style={{ border: "5px solid pink", position: "absolute" }}
     ></canvas>
   );
 }
