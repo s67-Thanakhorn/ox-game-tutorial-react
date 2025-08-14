@@ -4,6 +4,7 @@ import viteLogo from '/vite.svg'
 import GameCanvas from "./components/GameCanvas";
 import GameLogic from './components/GameLogic';
 import './App.css'
+import ResetButton from './components/ResetButton';
 
 function App() {
   

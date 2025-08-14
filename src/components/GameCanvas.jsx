@@ -8,7 +8,7 @@ function GameCanvas() {
     const boardSize = 600;
     const gridCount = 3
     const cellSize = boardSize / gridCount;
-
+    
     function drawGrid() {
       ctx.strokeStyle = "pink"; 
       ctx.lineWidth = 5;
@@ -28,6 +28,7 @@ function GameCanvas() {
     }
 
     drawGrid();
+    
   }, []);
 
   return (
