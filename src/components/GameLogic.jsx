@@ -11,19 +11,17 @@ function GameLogic() {
         const c = canvasRef.current;
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
-        drawGrid();
-        drawResetButton();
+        drawAll();
     }, []);
 
     useEffect(() => {
+        drawAll();
         if (winCheck()) {
             alert(`Player ${turn} wins!`);
             setClick(false);
         } else if (table.flat().every(cell => cell !== '')) {
             alert('Draw');
             setClick(false);
-        } else {
-            changeTurn();
         }
     }, [table]);
 
@@ -31,61 +29,28 @@ function GameLogic() {
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
 
-        // ตรวจว่าคลิกในปุ่ม reset หรือไม่
         if (x >= 200 && x <= 400 && y >= 610 && y <= 650) {
             resetGame();
             return;
         }
 
-        let row = Math.floor(x / 200);
-        let col = Math.floor(y / 200);
+        let col = Math.floor(x / 200);
+        let row = Math.floor(y / 200);
 
-        if (click && col < 3) {
-            draw(row, col);
-        }
-    };
-
-    const changeTurn = () => {
-        setTurn(turn === 'X' ? 'O' : 'X');
-    };
-
-    const draw = (row, col) => {
-        const ctx = ctxRef.current;
-        const newTable = table.map(row => [...row]);
-
-        ctx.beginPath();
-        ctx.strokeStyle = "#f39899ff";
-        ctx.lineWidth = 7;
-
-        if (turn === 'O' && table[row][col] === '') {
+        if (click && row < 3 && table[row][col] === '') {
+            const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
             setTable(newTable);
-            ctx.arc((row * 200) + 100, (col * 200) + 100, 70, 0, 2 * Math.PI);
-            ctx.stroke();
-        } else if (turn === 'X' && table[row][col] === '') {
-            newTable[row][col] = turn;
-            setTable(newTable);
-            ctx.moveTo(((row) * 200) + 30, ((col) * 200) + 30);
-            ctx.lineTo(((row + 1) * 200) - 30, ((col + 1) * 200) - 30);
-            ctx.moveTo(((row + 1) * 200) - 30, ((col) * 200) + 30);
-            ctx.lineTo(((row) * 200) + 30, ((col + 1) * 200) - 30);
-            ctx.stroke();
+            setTurn(turn === 'O' ? 'X' : 'O');
         }
     };
 
-    const winCheck = () => {
-        let turnValue = ['X', 'O'];
-        for (let i = 0; i < turnValue.length; i++) {
-            if (table[0][0] === turnValue[i] && table[0][1] === turnValue[i] && table[0][2] === turnValue[i]) return true;
-            if (table[1][0] === turnValue[i] && table[1][1] === turnValue[i] && table[1][2] === turnValue[i]) return true;
-            if (table[2][0] === turnValue[i] && table[2][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][0] === turnValue[i] && table[1][0] === turnValue[i] && table[2][0] === turnValue[i]) return true;
-            if (table[0][1] === turnValue[i] && table[1][1] === turnValue[i] && table[2][1] === turnValue[i]) return true;
-            if (table[0][2] === turnValue[i] && table[1][2] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][0] === turnValue[i] && table[1][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][2] === turnValue[i] && table[1][1] === turnValue[i] && table[2][0] === turnValue[i]) return true;
-        }
-    };
+    const drawAll = () => {
+        drawGrid();
+        drawMarks();
+        drawResetButton();
+        drawTurn();
+    }
 
     const drawGrid = () => {
         const ctx = ctxRef.current;
@@ -104,7 +69,30 @@ function GameLogic() {
         }
     };
 
-   const drawResetButton = () => {
+    const drawMarks = () => {
+        const ctx = ctxRef.current;
+        ctx.strokeStyle = "#f39899ff";
+        ctx.lineWidth = 7;
+        for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+                const mark = table[row][col];
+                if (mark === 'O') {
+                    ctx.beginPath();
+                    ctx.arc(col * 200 + 100, row * 200 + 100, 70, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else if (mark === 'X') {
+                    ctx.beginPath();
+                    ctx.moveTo(col * 200 + 30, row * 200 + 30);
+                    ctx.lineTo(col * 200 + 170, row * 200 + 170);
+                    ctx.moveTo(col * 200 + 170, row * 200 + 30);
+                    ctx.lineTo(col * 200 + 30, row * 200 + 170);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    const drawResetButton = () => {
         const ctx = ctxRef.current;
         ctx.fillStyle = "#ff9999";
         ctx.fillRect(200, 610, 200, 40);
@@ -117,12 +105,33 @@ function GameLogic() {
         ctx.fillText("RESET", 300, 630);
     };
 
+    const drawTurn = () => {
+        const ctx = ctxRef.current;
+        ctx.fillStyle = "blue";
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`ตาเล่น: ${turn}`, 300, 670);
+    }
+
+    const winCheck = () => {
+        let turnValue = ['X', 'O'];
+        for (let i = 0; i < turnValue.length; i++) {
+            if (table[0][0] === turnValue[i] && table[0][1] === turnValue[i] && table[0][2] === turnValue[i]) return true;
+            if (table[1][0] === turnValue[i] && table[1][1] === turnValue[i] && table[1][2] === turnValue[i]) return true;
+            if (table[2][0] === turnValue[i] && table[2][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
+            if (table[0][0] === turnValue[i] && table[1][0] === turnValue[i] && table[2][0] === turnValue[i]) return true;
+            if (table[0][1] === turnValue[i] && table[1][1] === turnValue[i] && table[2][1] === turnValue[i]) return true;
+            if (table[0][2] === turnValue[i] && table[1][2] === turnValue[i] && table[2][2] === turnValue[i]) return true;
+            if (table[0][0] === turnValue[i] && table[1][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
+            if (table[0][2] === turnValue[i] && table[1][1] === turnValue[i] && table[2][0] === turnValue[i]) return true;
+        }
+    };
+
     const resetGame = () => {
         setTable([['', '', ''], ['', '', ''], ['', '', '']]);
         setTurn('O');
         setClick(true);
-        drawGrid();
-        drawResetButton();
     };
 
     return (
