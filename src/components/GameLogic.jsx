@@ -38,10 +38,15 @@ function GameLogic() {
         let row = Math.floor(y / 200);
 
         if (click && row < 3 && table[row][col] === '') {
+            const current = turn; // เพิ่มเก็บว่าจะวาง X หรือ O
             const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
             setTable(newTable);
             setTurn(turn === 'O' ? 'X' : 'O');
+
+            //เพิ่ม
+            cycleMarkColor(row, col, current);
+
         }
     };
 
@@ -71,7 +76,7 @@ function GameLogic() {
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
-        ctx.strokeStyle = "#f39899ff";
+        ctx.strokeStyle = "#f39899ff"; 
         ctx.lineWidth = 7;
         for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 3; col++) {
@@ -91,6 +96,8 @@ function GameLogic() {
             }
         }
     }
+    
+
 
     const drawResetButton = () => {
         const ctx = ctxRef.current;
@@ -133,6 +140,36 @@ function GameLogic() {
         setTurn('O');
         setClick(true);
     };
+    
+    function cycleMarkColor(row, col, mark) {
+  const ctx = ctxRef.current;
+  const colors = ["#bc98f3ff", "#ffd966", "#9fe6a0"]; // สีที่อยากไล่
+  const drawOne = (color) => {
+    const cx = col * 200 + 100;
+    const cy = row * 200 + 100;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 7;
+
+    if (mark === 'O') {
+      ctx.beginPath();
+      ctx.arc(cx, cy, 70, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else if (mark === 'X') {
+      ctx.beginPath();
+      ctx.moveTo(col * 200 + 30,  row * 200 + 30);
+      ctx.lineTo(col * 200 + 170, row * 200 + 170);
+      ctx.moveTo(col * 200 + 170, row * 200 + 30);
+      ctx.lineTo(col * 200 + 30,  row * 200 + 170);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  setTimeout(() => drawOne(colors[0]), 0);
+  setTimeout(() => drawOne(colors[1]), 500);
+  setTimeout(() => drawOne(colors[2]), 1000);
+}
 
     return (
         <canvas
