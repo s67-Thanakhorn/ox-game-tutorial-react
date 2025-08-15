@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 function GameLogic() {
     const [turn, setTurn] = useState('O');
     const [table, setTable] = useState([['', '', ''], ['', '', ''], ['', '', '']]);
+    const [lastMove, setLastMove] = useState(null);
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
     const [click, setClick] = useState(true);
@@ -16,6 +17,17 @@ function GameLogic() {
 
     useEffect(() => {
         drawAll();
+        if (lastMove) {
+            const ctx = ctxRef.current;
+            const x = lastMove.col * 200 + 100;
+            const y = lastMove.row * 200 + 100;
+            const size = 70;
+            if (table[lastMove.row][lastMove.col] === 'O') {
+                drawCircleAnimated(ctx, x, y, size);
+            } else if (table[lastMove.row][lastMove.col] === 'X') {
+                drawXAnimated(ctx, x, y, size);
+            }
+        }
         if (winCheck()) {
             alert(`Player ${turn} wins!`);
             setClick(false);
@@ -41,8 +53,64 @@ function GameLogic() {
             const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
             setTable(newTable);
+            setLastMove({ row, col });
             setTurn(turn === 'O' ? 'X' : 'O');
         }
+    };
+
+    const drawCircleAnimated = (ctx, x, y, radius) => {
+        let endAngle = 0;
+        const step = Math.PI / 30;
+        const animate = () => {
+            drawAll();
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, endAngle);
+            ctx.strokeStyle = "#f39899ff";
+            ctx.lineWidth = 7;
+            ctx.stroke();
+            if (endAngle < 2 * Math.PI) {
+                endAngle += step;
+                requestAnimationFrame(animate);
+            }
+        };
+        animate();
+    };
+
+    const drawXAnimated = (ctx, x, y, size) => {
+        let progress = 0;
+        const step = 0.05;
+        const animate = () => {
+            drawAll();
+            ctx.strokeStyle = "#f39899ff";
+            ctx.lineWidth = 7;
+
+            // เส้นทแยงแรก
+            ctx.beginPath();
+            if (progress < 1) {
+                ctx.moveTo(x - size, y - size);
+                ctx.lineTo(x - size + progress * 2 * size, y - size + progress * 2 * size);
+                ctx.stroke();
+            } else {
+                ctx.moveTo(x - size, y - size);
+                ctx.lineTo(x + size, y + size);
+                ctx.stroke();
+            }
+
+            // เส้นทแยงสอง
+            if (progress > 0.5) {
+                const p = (progress - 0.5) * 2;
+                ctx.beginPath();
+                ctx.moveTo(x + size, y - size);
+                ctx.lineTo(x + size - p * 2 * size, y - size + p * 2 * size);
+                ctx.stroke();
+            }
+
+            if (progress < 1) {
+                progress += step;
+                requestAnimationFrame(animate);
+            }
+        };
+        animate();
     };
 
     const drawAll = () => {
@@ -73,14 +141,15 @@ function GameLogic() {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
         ctx.lineWidth = 7;
+
         for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 3; col++) {
                 const mark = table[row][col];
-                if (mark === 'O') {
+                if (mark === 'O' && (!lastMove || lastMove.row !== row || lastMove.col !== col)) {
                     ctx.beginPath();
                     ctx.arc(col * 200 + 100, row * 200 + 100, 70, 0, 2 * Math.PI);
                     ctx.stroke();
-                } else if (mark === 'X') {
+                } else if (mark === 'X' && (!lastMove || lastMove.row !== row || lastMove.col !== col)) {
                     ctx.beginPath();
                     ctx.moveTo(col * 200 + 30, row * 200 + 30);
                     ctx.lineTo(col * 200 + 170, row * 200 + 170);
@@ -90,7 +159,7 @@ function GameLogic() {
                 }
             }
         }
-    }
+    };
 
     const drawResetButton = () => {
         const ctx = ctxRef.current;
@@ -132,6 +201,7 @@ function GameLogic() {
         setTable([['', '', ''], ['', '', ''], ['', '', '']]);
         setTurn('O');
         setClick(true);
+        setLastMove(null);
     };
 
     return (
