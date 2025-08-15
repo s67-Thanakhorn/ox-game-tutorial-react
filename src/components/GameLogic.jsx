@@ -12,6 +12,8 @@ function GameLogic() {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
+
+        console.log(table.length);
     }, []);
 
     useEffect(() => {
@@ -23,6 +25,8 @@ function GameLogic() {
             alert('Draw');
             setClick(false);
         }
+
+        setTurn(turn === 'O' ? 'X' : 'O');
     }, [table]);
 
     const handleClick = e => {
@@ -41,33 +45,16 @@ function GameLogic() {
             const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
             setTable(newTable);
-            setTurn(turn === 'O' ? 'X' : 'O');
+
         }
     };
 
     const drawAll = () => {
-        drawGrid();
+
         drawMarks();
-        drawResetButton();
-        drawTurn();
+        
     }
 
-    const drawGrid = () => {
-        const ctx = ctxRef.current;
-        ctx.clearRect(0, 0, 600, 700);
-        ctx.strokeStyle = "#ccc";
-        ctx.lineWidth = 2;
-        for (let i = 1; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * 200, 0);
-            ctx.lineTo(i * 200, 600);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, i * 200);
-            ctx.lineTo(600, i * 200);
-            ctx.stroke();
-        }
-    };
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
@@ -91,41 +78,104 @@ function GameLogic() {
             }
         }
     }
+    
+    function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
 
-    const drawResetButton = () => {
-        const ctx = ctxRef.current;
-        ctx.fillStyle = "#ff9999";
-        ctx.fillRect(200, 610, 200, 40);
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(200, 610, 200, 40);
-        ctx.fillStyle = "#000";
-        ctx.font = "20px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("RESET", 300, 630);
-    };
+        for (let i = 0; i < arr.length; i++) {
 
-    const drawTurn = () => {
-        const ctx = ctxRef.current;
-        ctx.fillStyle = "blue";
-        ctx.font = "24px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(`ตาเล่น: ${turn}`, 300, 670);
+            for (let j = 0; j < arr.length; j++) {
+
+                if (arr[i] !== arr[j]) {
+
+
+                    return false; //ถ้าเจอไม่เหมือน return false
+                }
+
+            }
+        }
+
+        if (arr.includes('')) { //ถ้ามีฟันหนูซักอันใน array ที่ส่งเข้ามา return false
+
+            return false;
+
+        }
+
+        return true; //ถ้า array เหมือนกันทั้งหมด return true
+
     }
 
     const winCheck = () => {
-        let turnValue = ['X', 'O'];
-        for (let i = 0; i < turnValue.length; i++) {
-            if (table[0][0] === turnValue[i] && table[0][1] === turnValue[i] && table[0][2] === turnValue[i]) return true;
-            if (table[1][0] === turnValue[i] && table[1][1] === turnValue[i] && table[1][2] === turnValue[i]) return true;
-            if (table[2][0] === turnValue[i] && table[2][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][0] === turnValue[i] && table[1][0] === turnValue[i] && table[2][0] === turnValue[i]) return true;
-            if (table[0][1] === turnValue[i] && table[1][1] === turnValue[i] && table[2][1] === turnValue[i]) return true;
-            if (table[0][2] === turnValue[i] && table[1][2] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][0] === turnValue[i] && table[1][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][2] === turnValue[i] && table[1][1] === turnValue[i] && table[2][0] === turnValue[i]) return true;
+
+        let row = table.length; //3
+        const checkBoard = [];
+
+        // แนวนอน
+        for (let i = 0; i < row; i++) { // column
+
+            for (let j = 0; j < row; j++) { // row  
+
+                checkBoard.push(table[i][j]);
+
+            }
+            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+                console.log('แนวนอนชนะ');
+                return true;
+
+            }
+
+            checkBoard.length = 0;
         }
+
+        for (let i = 0; i < row; i++) { // column
+
+            for (let j = 0; j < row; j++) { // row  
+
+                checkBoard.push(table[j][i]);
+
+            }
+            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+                console.log('แนวตั้งชนะ');
+                return true;
+
+            }
+
+            checkBoard.length = 0;
+        }
+
+        for (let i = 0; i < row; i++) { // column
+
+            checkBoard.push(table[i][i]);
+            
+        }
+
+        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+            console.log('แนวเฉียงขวา');
+            return true;
+
+        }
+
+        checkBoard.length = 0;
+
+        for (let i = 0; i < row; i++) { // column
+
+            checkBoard.push(table[i][(row-1)-i]);
+            
+        }
+
+        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+            console.log('แนวเฉียงซ้าย');
+            return true;
+
+        }
+
+        checkBoard.length = 0;
+        
+
+
     };
 
     const resetGame = () => {
