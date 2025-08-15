@@ -1,16 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react'
 
 function GameLogic() {
-    const [turn, setTurn] = useState('O');
+    const [turn, setTurn] = useState('X');
     const [table, setTable] = useState([['', '', ''], ['', '', ''], ['', '', '']]);
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
     const [click, setClick] = useState(true);
 
+    let p = 0;
+    let i = 50;
+    let j = 50;
+    let k = 30;
+    let l = 170;
+
     useEffect(() => {
         const c = canvasRef.current;
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
+
         drawAll();
     }, []);
 
@@ -23,7 +30,9 @@ function GameLogic() {
             alert('Draw');
             setClick(false);
         }
+        
     }, [table]);
+
 
     const handleClick = e => {
         const x = e.nativeEvent.offsetX;
@@ -36,12 +45,13 @@ function GameLogic() {
 
         let col = Math.floor(x / 200);
         let row = Math.floor(y / 200);
+        setTurn(turn === 'O' ? 'X' : 'O');
 
         if (click && row < 3 && table[row][col] === '') {
             const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
             setTable(newTable);
-            setTurn(turn === 'O' ? 'X' : 'O');
+            
         }
     };
 
@@ -73,23 +83,48 @@ function GameLogic() {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
         ctx.lineWidth = 7;
+
+
         for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 3; col++) {
                 const mark = table[row][col];
                 if (mark === 'O') {
                     ctx.beginPath();
-                    ctx.arc(col * 200 + 100, row * 200 + 100, 70, 0, 2 * Math.PI);
+                    ctx.arc(col * 200 + 100, row * 200 + 100, 70, 0, 2 * p);
                     ctx.stroke();
+
+
                 } else if (mark === 'X') {
                     ctx.beginPath();
                     ctx.moveTo(col * 200 + 30, row * 200 + 30);
-                    ctx.lineTo(col * 200 + 170, row * 200 + 170);
+                    ctx.lineTo((col * 200 )+ j, (row * 200)+i);
+
                     ctx.moveTo(col * 200 + 170, row * 200 + 30);
-                    ctx.lineTo(col * 200 + 30, row * 200 + 170);
+                    ctx.lineTo((col * 200 ) + l, (row * 200 ) + k);
+
                     ctx.stroke();
                 }
             }
         }
+
+        p += 0.25;
+
+        if ( i < 170) {
+
+            i += 10;
+            j += 10;
+
+        }if ( k !== 170) {
+
+            k += 10;
+            
+        }if (l !== 30) {
+
+            l -= 10;
+        }
+
+        requestAnimationFrame(drawMarks);
+
     }
 
     const drawResetButton = () => {
@@ -130,7 +165,7 @@ function GameLogic() {
 
     const resetGame = () => {
         setTable([['', '', ''], ['', '', ''], ['', '', '']]);
-        setTurn('O');
+        setTurn('X');
         setClick(true);
     };
 
