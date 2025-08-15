@@ -2,9 +2,11 @@ import React from "react";
 
 function ResetButton({ onReset }) {
   return (
-    <button onClick={onReset} style={{ marginTop: "10px" }}>
-      รีสตาร์ทเกม
-    </button>
+    <div style={{ textAlign: "center", marginTop: "10px" }}>
+      <button onClick={onReset}>
+        รีสตาร์ทเกม
+      </button>
+    </div>
   );
 }
 

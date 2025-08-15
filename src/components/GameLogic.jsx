@@ -1,8 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react'
+import ResetButton from './ResetButton';
+import GameCanvas from './GameCanvas';
 
 function GameLogic() {
+
+    const boardSize = 600;
+    const gridCount = 6
+    const cellSize = boardSize / gridCount;
+    
+
+    const createEmptyTable = (gridCount) => {
+        const tableArray = [];
+        let i = 0;
+        
+        while (i < gridCount) {
+            const row = [];
+            let j = 0;
+            
+            while (j < gridCount) {
+                row.push('');
+                j++;
+            }
+            
+            tableArray.push(row);
+            i++;
+        }
+        return tableArray;
+    };
+
+    // ใช้กับ useState
+
     const [turn, setTurn] = useState('O');
-    const [table, setTable] = useState([['', '', ''], ['', '', ''], ['', '', '']]);
+    const [table, setTable] = useState(createEmptyTable(gridCount));
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
     const [click, setClick] = useState(true);
@@ -30,27 +59,22 @@ function GameLogic() {
     }, [table]);
 
     const handleClick = e => {
-        const x = e.nativeEvent.offsetX;
-        const y = e.nativeEvent.offsetY;
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
 
-        if (x >= 200 && x <= 400 && y >= 610 && y <= 650) {
-            resetGame();
-            return;
-        }
+    let col = Math.floor(x / cellSize);
+    let row = Math.floor(y / cellSize);
 
-        let col = Math.floor(x / 200);
-        let row = Math.floor(y / 200);
-
-        if (click && row < 3 && table[row][col] === '') {
-            const newTable = table.map(r => [...r]);
-            newTable[row][col] = turn;
-            setTable(newTable);
-
-        }
+    if (click && row < gridCount && table[row][col] === '') {
+        const newTable = table.map(r => [...r]);
+        newTable[row][col] = turn;
+        setTable(newTable);
+    }
     };
 
     const drawAll = () => {
-
+        const ctx = ctxRef.current;
+        ctx.clearRect(0, 0, 600, 700)
         drawMarks();
         
     }
@@ -60,19 +84,19 @@ function GameLogic() {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
         ctx.lineWidth = 7;
-        for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 3; col++) {
+        for (let row = 0; row < gridCount; row++) {
+            for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
                 if (mark === 'O') {
                     ctx.beginPath();
-                    ctx.arc(col * 200 + 100, row * 200 + 100, 70, 0, 2 * Math.PI);
+                    ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
                     ctx.stroke();
                 } else if (mark === 'X') {
                     ctx.beginPath();
-                    ctx.moveTo(col * 200 + 30, row * 200 + 30);
-                    ctx.lineTo(col * 200 + 170, row * 200 + 170);
-                    ctx.moveTo(col * 200 + 170, row * 200 + 30);
-                    ctx.lineTo(col * 200 + 30, row * 200 + 170);
+                    ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
+                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
+                    ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
+                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
                     ctx.stroke();
                 }
             }
@@ -179,19 +203,24 @@ function GameLogic() {
     };
 
     const resetGame = () => {
-        setTable([['', '', ''], ['', '', ''], ['', '', '']]);
+        setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
         setTurn('O');
         setClick(true);
     };
 
-    return (
+    return (<>
         <canvas
             ref={canvasRef}
             width="600"
-            height="700"
+            height="600"
             style={{ position: "absolute" }}
             onClick={handleClick}
-        ></canvas>
+    
+        > </canvas>
+        <ResetButton onReset={resetGame}/>
+        </>
+       
+        
     )
 }
 
