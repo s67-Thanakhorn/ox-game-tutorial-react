@@ -6,7 +6,7 @@ function GameCanvas() {
     const ctx = c.getContext("2d");
 
     const boardSize = 600;
-    const gridCount = 3
+    const gridCount = 6
     const cellSize = boardSize / gridCount;
     
     function drawGrid() {

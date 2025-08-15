@@ -1,8 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react'
+import ResetButton from './ResetButton';
+import GameCanvas from './GameCanvas';
 
 function GameLogic() {
+
+    const boardSize = 600;
+    const gridCount = 6
+    const cellSize = boardSize / gridCount;
+    
+
+    const createEmptyTable = (gridCount) => {
+        const tableArray = [];
+        let i = 0;
+        
+        while (i < gridCount) {
+            const row = [];
+            let j = 0;
+            
+            while (j < gridCount) {
+                row.push('');
+                j++;
+            }
+            
+            tableArray.push(row);
+            i++;
+        }
+        return tableArray;
+    };
+
+    // ใช้กับ useState
+
     const [turn, setTurn] = useState('O');
-    const [table, setTable] = useState([['', '', ''], ['', '', ''], ['', '', '']]);
+    const [table, setTable] = useState(createEmptyTable(gridCount));
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
     const [click, setClick] = useState(true);
@@ -12,6 +41,8 @@ function GameLogic() {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
+
+        console.log(table.length);
     }, []);
 
     useEffect(() => {
@@ -23,125 +54,173 @@ function GameLogic() {
             alert('Draw');
             setClick(false);
         }
+
+        setTurn(turn === 'O' ? 'X' : 'O');
     }, [table]);
 
     const handleClick = e => {
-        const x = e.nativeEvent.offsetX;
-        const y = e.nativeEvent.offsetY;
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
 
-        if (x >= 200 && x <= 400 && y >= 610 && y <= 650) {
-            resetGame();
-            return;
-        }
+    let col = Math.floor(x / cellSize);
+    let row = Math.floor(y / cellSize);
 
-        let col = Math.floor(x / 200);
-        let row = Math.floor(y / 200);
-
-        if (click && row < 3 && table[row][col] === '') {
-            const newTable = table.map(r => [...r]);
-            newTable[row][col] = turn;
-            setTable(newTable);
-            setTurn(turn === 'O' ? 'X' : 'O');
-        }
+    if (click && row < gridCount && table[row][col] === '') {
+        const newTable = table.map(r => [...r]);
+        newTable[row][col] = turn;
+        setTable(newTable);
+    }
     };
 
     const drawAll = () => {
-        drawGrid();
+        const ctx = ctxRef.current;
+        ctx.clearRect(0, 0, 600, 700)
         drawMarks();
-        drawResetButton();
-        drawTurn();
+        
     }
 
-    const drawGrid = () => {
-        const ctx = ctxRef.current;
-        ctx.clearRect(0, 0, 600, 700);
-        ctx.strokeStyle = "#ccc";
-        ctx.lineWidth = 2;
-        for (let i = 1; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * 200, 0);
-            ctx.lineTo(i * 200, 600);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, i * 200);
-            ctx.lineTo(600, i * 200);
-            ctx.stroke();
-        }
-    };
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
         ctx.lineWidth = 7;
-        for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 3; col++) {
+        for (let row = 0; row < gridCount; row++) {
+            for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
                 if (mark === 'O') {
                     ctx.beginPath();
-                    ctx.arc(col * 200 + 100, row * 200 + 100, 70, 0, 2 * Math.PI);
+                    ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
                     ctx.stroke();
                 } else if (mark === 'X') {
                     ctx.beginPath();
-                    ctx.moveTo(col * 200 + 30, row * 200 + 30);
-                    ctx.lineTo(col * 200 + 170, row * 200 + 170);
-                    ctx.moveTo(col * 200 + 170, row * 200 + 30);
-                    ctx.lineTo(col * 200 + 30, row * 200 + 170);
+                    ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
+                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
+                    ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
+                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
                     ctx.stroke();
                 }
             }
         }
     }
+    
+    function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
 
-    const drawResetButton = () => {
-        const ctx = ctxRef.current;
-        ctx.fillStyle = "#ff9999";
-        ctx.fillRect(200, 610, 200, 40);
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(200, 610, 200, 40);
-        ctx.fillStyle = "#000";
-        ctx.font = "20px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("RESET", 300, 630);
-    };
+        for (let i = 0; i < arr.length; i++) {
 
-    const drawTurn = () => {
-        const ctx = ctxRef.current;
-        ctx.fillStyle = "blue";
-        ctx.font = "24px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(`ตาเล่น: ${turn}`, 300, 670);
+            for (let j = 0; j < arr.length; j++) {
+
+                if (arr[i] !== arr[j]) {
+
+
+                    return false; //ถ้าเจอไม่เหมือน return false
+                }
+
+            }
+        }
+
+        if (arr.includes('')) { //ถ้ามีฟันหนูซักอันใน array ที่ส่งเข้ามา return false
+
+            return false;
+
+        }
+
+        return true; //ถ้า array เหมือนกันทั้งหมด return true
+
     }
 
     const winCheck = () => {
-        let turnValue = ['X', 'O'];
-        for (let i = 0; i < turnValue.length; i++) {
-            if (table[0][0] === turnValue[i] && table[0][1] === turnValue[i] && table[0][2] === turnValue[i]) return true;
-            if (table[1][0] === turnValue[i] && table[1][1] === turnValue[i] && table[1][2] === turnValue[i]) return true;
-            if (table[2][0] === turnValue[i] && table[2][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][0] === turnValue[i] && table[1][0] === turnValue[i] && table[2][0] === turnValue[i]) return true;
-            if (table[0][1] === turnValue[i] && table[1][1] === turnValue[i] && table[2][1] === turnValue[i]) return true;
-            if (table[0][2] === turnValue[i] && table[1][2] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][0] === turnValue[i] && table[1][1] === turnValue[i] && table[2][2] === turnValue[i]) return true;
-            if (table[0][2] === turnValue[i] && table[1][1] === turnValue[i] && table[2][0] === turnValue[i]) return true;
+
+        let row = table.length; //3
+        const checkBoard = [];
+
+        // แนวนอน
+        for (let i = 0; i < row; i++) { // column
+
+            for (let j = 0; j < row; j++) { // row  
+
+                checkBoard.push(table[i][j]);
+
+            }
+            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+                console.log('แนวนอนชนะ');
+                return true;
+
+            }
+
+            checkBoard.length = 0;
         }
+
+        for (let i = 0; i < row; i++) { // column
+
+            for (let j = 0; j < row; j++) { // row  
+
+                checkBoard.push(table[j][i]);
+
+            }
+            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+                console.log('แนวตั้งชนะ');
+                return true;
+
+            }
+
+            checkBoard.length = 0;
+        }
+
+        for (let i = 0; i < row; i++) { // column
+
+            checkBoard.push(table[i][i]);
+            
+        }
+
+        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+            console.log('แนวเฉียงขวา');
+            return true;
+
+        }
+
+        checkBoard.length = 0;
+
+        for (let i = 0; i < row; i++) { // column
+
+            checkBoard.push(table[i][(row-1)-i]);
+            
+        }
+
+        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
+
+            console.log('แนวเฉียงซ้าย');
+            return true;
+
+        }
+
+        checkBoard.length = 0;
+        
+
+
     };
 
     const resetGame = () => {
-        setTable([['', '', ''], ['', '', ''], ['', '', '']]);
+        setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
         setTurn('O');
         setClick(true);
     };
 
-    return (
+    return (<>
         <canvas
             ref={canvasRef}
             width="600"
-            height="700"
+            height="600"
             style={{ position: "absolute" }}
             onClick={handleClick}
-        ></canvas>
+    
+        > </canvas>
+        <ResetButton onReset={resetGame}/>
+        </>
+       
+        
     )
 }
 
