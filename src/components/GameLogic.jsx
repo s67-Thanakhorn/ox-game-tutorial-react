@@ -18,21 +18,29 @@ function GameLogic() {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
 
-        drawAll();
     }, []);
 
     useEffect(() => {
-        drawAll();
-        if (winCheck()) {
-            alert(`Player ${turn} wins!`);
-            setClick(false);
-        } else if (table.flat().every(cell => cell !== '')) {
-            alert('Draw');
-            setClick(false);
-        }
 
-        setTurn(turn === 'O' ? 'X' : 'O');
+        drawMarks();
+
+        const interV = setInterval(() => {
+
+            if (winCheck()) {
+                alert(`Player ${turn} wins!`);
+                setClick(false);
+            } else if (table.flat().every(cell => cell !== '')) {
+                alert('Draw');
+                setClick(false);
+            }
+
+            clearInterval(interV);
+
+        },300);
+
         
+        setTurn(turn === 'O' ? 'X' : 'O');
+
     }, [table]);
 
 
@@ -47,21 +55,16 @@ function GameLogic() {
 
         let col = Math.floor(x / 200);
         let row = Math.floor(y / 200);
-        
+
 
         if (click && row < 3 && table[row][col] === '') {
             const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
             setTable(newTable);
-            
+
         }
     };
 
-    const drawAll = () => {
-
-        drawMarks();
-
-    }
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
@@ -81,10 +84,10 @@ function GameLogic() {
                 } else if (mark === 'X') {
                     ctx.beginPath();
                     ctx.moveTo(col * 200 + 30, row * 200 + 30);
-                    ctx.lineTo((col * 200 )+ j, (row * 200)+i);
+                    ctx.lineTo((col * 200) + j, (row * 200) + i);
 
                     ctx.moveTo(col * 200 + 170, row * 200 + 30);
-                    ctx.lineTo((col * 200 ) + l, (row * 200 ) + k);
+                    ctx.lineTo((col * 200) + l, (row * 200) + k);
 
                     ctx.stroke();
                 }
@@ -93,16 +96,16 @@ function GameLogic() {
 
         p += 0.25;
 
-        if ( i < 170) {
+        if (i < 170) {
 
             i += 10;
             j += 10;
 
-        }if ( k !== 170) {
+        } if (k !== 170) {
 
             k += 10;
-            
-        }if (l !== 30) {
+
+        } if (l !== 30) {
 
             l -= 10;
         }
@@ -111,7 +114,7 @@ function GameLogic() {
 
     }
 
-     function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
+    function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
 
         for (let i = 0; i < arr.length; i++) {
 
@@ -179,7 +182,7 @@ function GameLogic() {
         for (let i = 0; i < row; i++) { // column
 
             checkBoard.push(table[i][i]);
-            
+
         }
 
         if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
@@ -193,8 +196,8 @@ function GameLogic() {
 
         for (let i = 0; i < row; i++) { // column
 
-            checkBoard.push(table[i][(row-1)-i]);
-            
+            checkBoard.push(table[i][(row - 1) - i]);
+
         }
 
         if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
@@ -205,7 +208,7 @@ function GameLogic() {
         }
 
         checkBoard.length = 0;
-        
+
 
 
     };
