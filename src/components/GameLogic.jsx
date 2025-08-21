@@ -5,7 +5,7 @@ import GameCanvas from './GameCanvas';
 function GameLogic() {
 
     const boardSize = 600;
-    const gridCount = 6
+    const gridCount = 3
     const cellSize = boardSize / gridCount;
     
 
