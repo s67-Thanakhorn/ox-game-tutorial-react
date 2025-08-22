@@ -143,21 +143,33 @@ function GameLogic() {
         setClick(true);
     };
     
-    function cycleMarkColor(row, col, mark) {
+ 
+function cycleMarkColor(row, col, mark) {
   const ctx = ctxRef.current;
-  const colors = ["#bc98f3ff", "#ffd966", "#9fe6a0"]; // สีที่อยากไล่
-  const drawOne = (color) => {
-    const cx = col * 200 + 100;
-    const cy = row * 200 + 100;
+  if (!ctx) return;
+
+  const DURATION = 1000; // ms 
+  let start = null;
+
+  function frame(ts) {
+    if (start === null) start = ts;
+    const raw = Math.min((ts - start) / DURATION, 1); //ค่าความคืบหน้า 0→1
+    const p = raw;
+
+    const hue = 315 + (45-315) * p;
+
     ctx.save();
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
     ctx.lineWidth = 7;
 
-    if (mark === 'O') {
+    const cx = col * 200 + 100;
+    const cy = row * 200 + 100;
+
+    if (mark === "O") {
       ctx.beginPath();
-      ctx.arc(cx, cy, 70, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 70, 0, Math.PI * 2);
       ctx.stroke();
-    } else if (mark === 'X') {
+    } else { // "X"
       ctx.beginPath();
       ctx.moveTo(col * 200 + 30,  row * 200 + 30);
       ctx.lineTo(col * 200 + 170, row * 200 + 170);
@@ -166,12 +178,13 @@ function GameLogic() {
       ctx.stroke();
     }
     ctx.restore();
-  };
 
-  setTimeout(() => drawOne(colors[0]), 0);
-  setTimeout(() => drawOne(colors[1]), 500);
-  setTimeout(() => drawOne(colors[2]), 1000);
+    if (raw < 1) requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
 }
+
 
     return (
         <canvas
