@@ -16,14 +16,16 @@ function GameLogic() {
 
     useEffect(() => {
         drawAll();
+      
         if (winCheck()) {
-            alert(`Player ${turn} wins!`);
-            setClick(false);
+          const winner = turn === 'O' ? 'X' : 'O'; // last player who placed
+          alert(`Player ${winner} wins!`);
+          setClick(false);
         } else if (table.flat().every(cell => cell !== '')) {
-            alert('Draw');
-            setClick(false);
+          alert('Draw');
+          setClick(false);
         }
-    }, [table]);
+      }, [table]);
 
     const handleClick = e => {
         const x = e.nativeEvent.offsetX;
