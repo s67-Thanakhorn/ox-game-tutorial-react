@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 
-function GameCanvas() {
+function GameCanvas( {gridProps}) {
   useEffect(() => {
     const c = document.getElementById("myCanvas");
     const ctx = c.getContext("2d");
 
     const boardSize = 600;
-    const gridCount = 3
+    const gridCount = Number(gridProps)
     const cellSize = boardSize / gridCount;
     
     function drawGrid() {

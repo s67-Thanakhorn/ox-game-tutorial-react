@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react'
 import ResetButton from './ResetButton';
 import GameCanvas from './GameCanvas';
 
-function GameLogic() {
+function GameLogic({gridProps}) {
 
     const boardSize = 600;
-    const gridCount = 3
+    const gridCount = Number(gridProps)
     const cellSize = boardSize / gridCount;
     
 
@@ -42,7 +42,6 @@ function GameLogic() {
         ctxRef.current = ctx;
         drawAll();
 
-        console.log(table.length);
     }, []);
 
     useEffect(() => {
@@ -83,7 +82,7 @@ function GameLogic() {
     const drawMarks = () => {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
-        ctx.lineWidth = 7;
+        ctx.lineWidth = gridCount / gridCount*5;
         for (let row = 0; row < gridCount; row++) {
             for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
