@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import ResetButton from './ResetButton';
 import GameCanvas from './GameCanvas';
 
-function GameLogic({gridProps}) {
+function GameLogic({gridProps ,turn ,setTurn}) {
 
     const boardSize = 600;
     const gridCount = Number(gridProps)
@@ -30,7 +30,6 @@ function GameLogic({gridProps}) {
 
     // ใช้กับ useState
 
-    const [turn, setTurn] = useState('O');
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -208,6 +207,9 @@ function GameLogic({gridProps}) {
     };
 
     return (<>
+
+        
+        
         <canvas
             ref={canvasRef}
             width="600"
