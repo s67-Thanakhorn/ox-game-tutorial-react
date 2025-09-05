@@ -83,19 +83,31 @@ function GameLogic({gridProps}) {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
         ctx.lineWidth = gridCount / gridCount*5;
+
         for (let row = 0; row < gridCount; row++) {
             for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
-                if (mark === 'O') {
+
+                if (mark === 'O') { //เปลี่ยนเป็น สี่เหลียม
                     ctx.beginPath();
-                    ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
-                    ctx.stroke();
-                } else if (mark === 'X') {
+                    const x0 = col * cellSize + (cellSize * 0.15);
+                    const y0 = row * cellSize + (cellSize * 0.15);
+                    const size = cellSize * 0.70; 
+                    ctx.strokeRect(x0, y0, size, size);
+                } else if (mark === 'X') { //เปลี่ยนเป็นสามเหลี่ยม
                     ctx.beginPath();
-                    ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
-                    ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
+                    //  (ยอดบน + ซ้ายล่าง + ขวา)
+                    const cx = col * cellSize + (cellSize / 2);
+                    const topY = row * cellSize + (cellSize * 0.15);
+                    const leftX = col * cellSize + (cellSize * 0.15);
+                    const rightX = col * cellSize + (cellSize * 0.85);
+                    const bottomY = row * cellSize + (cellSize * 0.85);
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, topY);
+                    ctx.lineTo(leftX, bottomY);
+                    ctx.lineTo(rightX, bottomY);
+                    ctx.closePath(); 
                     ctx.stroke();
                 }
             }
