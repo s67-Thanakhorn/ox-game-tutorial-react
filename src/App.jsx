@@ -11,7 +11,7 @@ function App() {
   const [grid, setGrid] = useState(() => {
     const saved = localStorage.getItem("grid");
     const n = Number(saved);
-    return Number.isInteger(n) && n >= 3 ? n : 3; // ค่าเริ่มต้น
+    return Number.isInteger(n) && n >= 2 ? n : 2; // ค่าเริ่มต้น
   });
 
   useEffect(() => {

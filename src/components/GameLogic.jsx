@@ -8,7 +8,7 @@ function GameLogic({gridProps}) {
     const gridCount = Number(gridProps)
     const cellSize = boardSize / gridCount;
     
-
+    
     const createEmptyTable = (gridCount) => {
         const tableArray = [];
         let i = 0;
@@ -30,7 +30,7 @@ function GameLogic({gridProps}) {
 
     // ใช้กับ useState
 
-    const [turn, setTurn] = useState('O');
+    const [turn, setTurn] = useState('☐');
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -41,6 +41,8 @@ function GameLogic({gridProps}) {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
+
+        console.log(gridCount)
 
     }, []);
 
@@ -54,7 +56,9 @@ function GameLogic({gridProps}) {
             setClick(false);
         }
 
-        setTurn(turn === 'O' ? 'X' : 'O');
+        setTurn(turn === '☐' ? '△' : '☐');
+
+        
     }, [table]);
 
     const handleClick = e => {
@@ -86,16 +90,30 @@ function GameLogic({gridProps}) {
         for (let row = 0; row < gridCount; row++) {
             for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
-                if (mark === 'O') {
+                if (mark === '☐') {
                     ctx.beginPath();
-                    ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
+                    // ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
+                    ctx.rect(col * cellSize + (cellSize * 0.2) ,row * cellSize + (cellSize * 0.2),390/gridCount,390/gridCount);
                     ctx.stroke();
-                } else if (mark === 'X') {
+                } else if (mark === '△') {
                     ctx.beginPath();
-                    ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
-                    ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
+                    // ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
+                    // ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
+                    // ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
+                    // ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
+
+                    // เส้น \
+                    ctx.moveTo(col * cellSize + (cellSize*0.49), row * cellSize + (cellSize*0.15))
+                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.86))
+
+                    // เส้น /
+                    ctx.moveTo(col * cellSize + (cellSize*0.5), row * cellSize + (cellSize*0.15))
+                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85))
+
+                    // เส้น _
+                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85))
+                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85))
+
                     ctx.stroke();
                 }
             }
@@ -203,7 +221,7 @@ function GameLogic({gridProps}) {
 
     const resetGame = () => {
         setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
-        setTurn('O');
+        setTurn('☐');
         setClick(true);
     };
 
