@@ -54,7 +54,7 @@ function GameLogic({gridProps}) {
             setClick(false);
         }
 
-        setTurn(turn === 'O' ? 'X' : 'O');
+        setTurn(turn === '□' ? '△' : '□');
     }, [table]);
 
     const handleClick = e => {
@@ -88,13 +88,13 @@ function GameLogic({gridProps}) {
             for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
 
-                if (mark === 'O') { //เปลี่ยนเป็น สี่เหลียม
+                if (mark === '□') { //เปลี่ยนเป็น สี่เหลียม
                     ctx.beginPath();
                     const x0 = col * cellSize + (cellSize * 0.15);
                     const y0 = row * cellSize + (cellSize * 0.15);
                     const size = cellSize * 0.70; 
                     ctx.strokeRect(x0, y0, size, size);
-                } else if (mark === 'X') { //เปลี่ยนเป็นสามเหลี่ยม
+                } else if (mark === '△') { //เปลี่ยนเป็นสามเหลี่ยม
                     ctx.beginPath();
                     //  (ยอดบน + ซ้ายล่าง + ขวา)
                     const cx = col * cellSize + (cellSize / 2);
