@@ -30,7 +30,7 @@ function GameLogic({gridProps}) {
 
     // ใช้กับ useState
 
-    const [turn, setTurn] = useState('O');
+    const [turn, setTurn] = useState('1','2','3');
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -47,10 +47,10 @@ function GameLogic({gridProps}) {
     useEffect(() => {
         drawAll();
         if (winCheck()) {
-            alert(`Player ${turn} wins!`);
+            alert(`You wins!`);
             setClick(false);
         } else if (table.flat().every(cell => cell !== '')) {
-            alert('Draw');
+            alert('Try Again');
             setClick(false);
         }
 

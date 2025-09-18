@@ -5,6 +5,7 @@ import GameCanvas from "./components/GameCanvas";
 import GameLogic from './components/GameLogic';
 import './App.css'
 import GridInput from './components/GridInput';
+import PossibleNum from './components/PossibleNum'
 
 function App() {
 
