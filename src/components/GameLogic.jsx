@@ -34,6 +34,8 @@ function GameLogic({ gridProps }) {
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const [winner, setWinner] = useState('');
     const [id, setId] = useState(0);
+    const displayId = Array.isArray(id) ? id[0] : id;
+
 
     // json handle
 
@@ -100,7 +102,7 @@ function GameLogic({ gridProps }) {
         drawAll();
         createRoom();
 
-        
+
     }, []);
 
     useEffect(() => {
@@ -276,6 +278,10 @@ function GameLogic({ gridProps }) {
     };
 
     return (<>
+        <div>
+            Room: {displayId || 'creating...'}
+        </div>
+
         <canvas
             ref={canvasRef}
             width="600"
