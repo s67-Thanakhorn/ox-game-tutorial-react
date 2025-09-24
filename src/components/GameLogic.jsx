@@ -33,8 +33,10 @@ function GameLogic({ gridProps }) {
     const [turn, setTurn] = useState('O');
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const [winner, setWinner] = useState('');
+    const [id, setId] = useState(0);
 
     // json handle
+
     const [tablejson, setTablejson] = useState('');
 
     const fetchTable = () => {
@@ -48,7 +50,7 @@ function GameLogic({ gridProps }) {
     const createRoom = async () => {
 
         const { data, error } = await supabase.from('game_tables').insert([
-            { board_state: tablejson, current_turn: turn, winner: winner, player1_id: getUserId() , player2_id: 3456 }
+            { board_state: tablejson, current_turn: turn, winner: winner }
 
         ]).select('*')
 
@@ -58,35 +60,33 @@ function GameLogic({ gridProps }) {
 
         } else {
 
-            console.log('Create Room Complete!', data)
+            console.log('Create Room Complete!', data.map((n) => {
+                return n.id;
+            }))
+
+            setId(data.map((n) => {
+                return n.id;
+            }))
         }
 
     }
 
-    // session required
-    const getUserId = async () => {
+    // update
 
-        const { data: { session }, error } = await supabase.auth.getSession();
+    const updateTable = async () => {
+        const { data, error } = await supabase
+            .from('game_tables')
+            .update({ board_state: tablejson, current_turn: turn, winner: winner })
+            .eq('id', id)
+            .select('*');
 
         if (error) {
-            console.log(error)
-            return null
+            console.error('Error updating user data:', error.message);
+        } else {
+            console.log('User data updated successfully:', data);
         }
+    };
 
-        if (session) {
-
-            const userId = session.user.id;
-            console.log('Current User ID:', userId);
-            return userId;
-
-        }else {
-
-            console.log('ไม่เจอจ้า')
-            return null;
-
-        }
-
-    }
 
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -100,11 +100,14 @@ function GameLogic({ gridProps }) {
         drawAll();
         createRoom();
 
+        
     }, []);
 
     useEffect(() => {
 
         fetchTable();
+        updateTable();
+
         drawAll();
         if (winCheck()) {
             alert(`Player ${turn} wins!`);
@@ -117,6 +120,8 @@ function GameLogic({ gridProps }) {
         }
 
         setTurn(turn === 'O' ? 'X' : 'O');
+
+        console.log(id);
 
     }, [table]);
 
