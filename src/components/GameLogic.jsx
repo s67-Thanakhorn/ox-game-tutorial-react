@@ -1,27 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ResetButton from './ResetButton';
 import GameCanvas from './GameCanvas';
+import { supabase } from '../supabaseClient';
 
-function GameLogic({gridProps}) {
+function GameLogic({ gridProps }) {
 
     const boardSize = 600;
     const gridCount = Number(gridProps)
     const cellSize = boardSize / gridCount;
-    
 
     const createEmptyTable = (gridCount) => {
         const tableArray = [];
         let i = 0;
-        
+
         while (i < gridCount) {
             const row = [];
             let j = 0;
-            
+
             while (j < gridCount) {
                 row.push('');
                 j++;
             }
-            
+
             tableArray.push(row);
             i++;
         }
@@ -32,76 +32,139 @@ function GameLogic({gridProps}) {
 
     const [turn, setTurn] = useState('O');
     const [table, setTable] = useState(createEmptyTable(gridCount));
+    const [winner, setWinner] = useState('');
+
+    // json handle
+    const [tablejson, setTablejson] = useState('');
+
+    const fetchTable = () => {
+
+        setTablejson(JSON.stringify(table))
+
+    }
+
+    // createRoom
+
+    const createRoom = async () => {
+
+        const { data, error } = await supabase.from('game_tables').insert([
+            { board_state: tablejson, current_turn: turn, winner: winner, player1_id: getUserId() , player2_id: 3456 }
+
+        ]).select('*')
+
+        if (error) {
+
+            console.log('Error', error)
+
+        } else {
+
+            console.log('Create Room Complete!', data)
+        }
+
+    }
+
+    // session required
+    const getUserId = async () => {
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+            console.log(error)
+            return null
+        }
+
+        if (session) {
+
+            const userId = session.user.id;
+            console.log('Current User ID:', userId);
+            return userId;
+
+        }else {
+
+            console.log('ไม่เจอจ้า')
+            return null;
+
+        }
+
+    }
+
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
     const [click, setClick] = useState(true);
 
     useEffect(() => {
+
         const c = canvasRef.current;
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
+        createRoom();
 
     }, []);
 
     useEffect(() => {
+
+        fetchTable();
         drawAll();
         if (winCheck()) {
             alert(`Player ${turn} wins!`);
+            setWinner(turn)
             setClick(false);
         } else if (table.flat().every(cell => cell !== '')) {
             alert('Draw');
+            setWinner('Draw')
             setClick(false);
         }
 
         setTurn(turn === 'O' ? 'X' : 'O');
+
     }, [table]);
 
     const handleClick = e => {
-    const x = e.nativeEvent.offsetX;
-    const y = e.nativeEvent.offsetY;
+        const x = e.nativeEvent.offsetX;
+        const y = e.nativeEvent.offsetY;
 
-    let col = Math.floor(x / cellSize);
-    let row = Math.floor(y / cellSize);
+        let col = Math.floor(x / cellSize);
+        let row = Math.floor(y / cellSize);
 
-    if (click && row < gridCount && table[row][col] === '') {
-        const newTable = table.map(r => [...r]);
-        newTable[row][col] = turn;
-        setTable(newTable);
-    }
+        if (click && row < gridCount && table[row][col] === '') {
+            const newTable = table.map(r => [...r]);
+            newTable[row][col] = turn;
+            setTable(newTable);
+        }
     };
 
     const drawAll = () => {
         const ctx = ctxRef.current;
         ctx.clearRect(0, 0, 600, 700)
         drawMarks();
-        
+
     }
 
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
         ctx.strokeStyle = "#f39899ff";
-        ctx.lineWidth = gridCount / gridCount*5;
+        ctx.lineWidth = gridCount / gridCount * 5;
         for (let row = 0; row < gridCount; row++) {
             for (let col = 0; col < gridCount; col++) {
                 const mark = table[row][col];
                 if (mark === 'O') {
                     ctx.beginPath();
-                    ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
+                    ctx.arc(col * cellSize + (cellSize / 2), row * cellSize + (cellSize / 2), (cellSize * (1 / 3)), 0, 2 * Math.PI);
                     ctx.stroke();
                 } else if (mark === 'X') {
                     ctx.beginPath();
-                    ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
-                    ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
+                    ctx.moveTo(col * cellSize + (cellSize * 0.15), row * cellSize + (cellSize * 0.15));
+                    ctx.lineTo(col * cellSize + (cellSize * 0.85), row * cellSize + (cellSize * 0.85));
+                    ctx.moveTo(col * cellSize + (cellSize * 0.85), row * cellSize + (cellSize * 0.15));
+                    ctx.lineTo(col * cellSize + (cellSize * 0.15), row * cellSize + (cellSize * 0.85));
                     ctx.stroke();
                 }
             }
         }
     }
-    
+
     function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
 
         for (let i = 0; i < arr.length; i++) {
@@ -170,7 +233,7 @@ function GameLogic({gridProps}) {
         for (let i = 0; i < row; i++) { // column
 
             checkBoard.push(table[i][i]);
-            
+
         }
 
         if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
@@ -184,8 +247,8 @@ function GameLogic({gridProps}) {
 
         for (let i = 0; i < row; i++) { // column
 
-            checkBoard.push(table[i][(row-1)-i]);
-            
+            checkBoard.push(table[i][(row - 1) - i]);
+
         }
 
         if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
@@ -196,7 +259,7 @@ function GameLogic({gridProps}) {
         }
 
         checkBoard.length = 0;
-        
+
 
 
     };
@@ -214,12 +277,12 @@ function GameLogic({gridProps}) {
             height="600"
             style={{ position: "absolute" }}
             onClick={handleClick}
-    
+
         > </canvas>
-        <ResetButton onReset={resetGame}/>
-        </>
-       
-        
+        <ResetButton onReset={resetGame} />
+    </>
+
+
     )
 }
 
