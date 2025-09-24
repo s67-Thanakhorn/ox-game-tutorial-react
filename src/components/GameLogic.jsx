@@ -10,6 +10,7 @@ function GameLogic({ gridProps , turn , setTurn}) {
     const gridCount = Number(gridProps)
     const cellSize = boardSize / gridCount;
 
+    // สร้าง array 2D ขนาด n*n
     const createEmptyTable = (gridCount) => {
         const tableArray = [];
         let i = 0;
@@ -34,58 +35,60 @@ function GameLogic({ gridProps , turn , setTurn}) {
     
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const [winner, setWinner] = useState('');
-    const [id, setId] = useState(0);
-    const displayId = Array.isArray(id) ? id[0] : id;
+
+    const [id, setId] = useState(0); // ตัวแปรเก็บค่าไอดี
+    const displayId = Array.isArray(id) ? id[0] : id; // เนื่องจากไอดีที่ได้จากฟังก์ชัน map เป็น array ต้องแปลงเป็น int
 
 
     // json handle
 
-    const [tablejson, setTablejson] = useState('');
+    const [tablejson, setTablejson] = useState(''); // ตัวแปรเก็บค่าตารางที่เป็น Object แบบ json
 
-    const fetchTable = () => {
 
-        setTablejson(JSON.stringify(table))
+    const fetchTable = () => { // ฟังก์ชันเซ็ตค่า tablejson เป็น table array => object json
+
+        setTablejson(JSON.stringify(table)) 
 
     }
 
-    // createRoom
+    // createRoom ฟังก์ชันสร้างห้อง หรือ เพิ่ม row ใหม่เข้าไปใน supabase
 
     const createRoom = async () => {
 
-        const { data, error } = await supabase.from('game_tables').insert([
-            { board_state: tablejson, current_turn: turn, winner: winner }
+        const { data, error } = await supabase.from('game_tables').insert([ // หา table ที่ชื่อ game_tables แล้ว insert หรือเพิ่มข้อมูลเข้าไป
+            { board_state: tablejson, current_turn: turn, winner: winner } // เพิ่มข้อมูลเป็น row ใหม่ขึ้นมาตาม column ใน supabase
 
-        ]).select('*')
+        ]).select('*') // เลือกให้เพิ่มทั้งหมด
 
-        if (error) {
+        if (error) { //ถ้าเจอ error ให้ log สาเหตุใส่ใน console
 
             console.log('Error', error)
 
-        } else {
+        } else { //ถ้าไม่เจอ error
 
-            console.log('Create Room Complete!', data.map((n) => {
+            console.log('Create Room Complete!', data.map((n) => { //log ว่าทำสำเร็จ แล้วบอกค่าเลขห้องมา โดยใช้ map วนใน json object แล้วเอาแค่ id ออกมา
                 return n.id;
             }))
 
-            setId(data.map((n) => {
+            setId(data.map((n) => { //set ค่า i เป็นค่า id ที่เราใช้ map วน
                 return n.id;
             }))
         }
 
     }
 
-    // update
+    // update ฟังก์ชันอัพเดตค่าใน row เมื่อมีการ click เกิดขึ้น (ใช้ร้วมกับ useEffect table event)
 
     const updateTable = async () => {
-        const { data, error } = await supabase
-            .from('game_tables')
-            .update({ board_state: tablejson, current_turn: turn, winner: winner })
-            .eq('id', id)
-            .select('*');
+        const { data, error } = await supabase 
+            .from('game_tables') // เรียก table ที่ชื่อ game_tables ใน supabase
+            .update({ board_state: tablejson, current_turn: turn, winner: winner }) // กำหนดค่าใน row 
+            .eq('id', id) // อ้างอิง id เพื่อแก้ไขข้อมูลให้ถูก row 
+            .select('*'); // เพิ่มข้อมูลเข้าไปทุกๆ row
 
-        if (error) {
+        if (error) { // ถ้า error ให้ log ค่าออกมา
             console.error('Error updating user data:', error.message);
-        } else {
+        } else { // ถ้าไม่เจอก็บอกว่าสำเร็จ
             console.log('User data updated successfully:', data);
         }
     };
@@ -101,15 +104,15 @@ function GameLogic({ gridProps , turn , setTurn}) {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
-        createRoom();
 
+        createRoom(); // ใช้ฟังก์ชัน createRoom เมื่อมีการ mount 
 
     }, []);
 
     useEffect(() => {
 
-        fetchTable();
-        updateTable();
+        fetchTable(); // ใช้ฟังก์ชัน fetchTable เมื่อค่าใน table เปลี่ยนแปลง
+        updateTable(); // ใช้ฟังก์ชัน updateTable เมื่อค่าใน table เปลี่ยนแปลง
 
         drawAll();
         if (winCheck()) {
