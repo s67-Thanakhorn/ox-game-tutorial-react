@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ResetButton from './ResetButton';
 import GameCanvas from './GameCanvas';
+import ShowText from './ShowText';
 import { supabase } from '../supabaseClient';
 
-function GameLogic({ gridProps }) {
+function GameLogic({ gridProps , turn , setTurn}) {
 
     const boardSize = 600;
     const gridCount = Number(gridProps)
@@ -30,7 +31,7 @@ function GameLogic({ gridProps }) {
 
     // ใช้กับ useState
 
-    const [turn, setTurn] = useState('O');
+    
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const [winner, setWinner] = useState('');
     const [id, setId] = useState(0);
@@ -278,17 +279,14 @@ function GameLogic({ gridProps }) {
     };
 
     return (<>
-        <div>
-            Room: {displayId || 'creating...'}
-        </div>
-
+        
+        <h2 style={{position : 'relative' , left : 450 , bottom : 50}}>Room ID : {displayId || 'creating...'}</h2>
         <canvas
             ref={canvasRef}
             width="600"
             height="600"
-            style={{ position: "absolute" }}
+            style={{ position: "absolute", bottom : 325 , left : 12  }}
             onClick={handleClick}
-
         > </canvas>
         <ResetButton onReset={resetGame} />
     </>
