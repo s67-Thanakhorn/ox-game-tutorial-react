@@ -1,13 +1,18 @@
 import './App.css'
+import { useState , useEffect } from 'react'
 import Game from './Game'
+import Menu from './components/Menu'
 
 function App() {
+
+  const [ scene1 , setScene1] = useState(false)
 
   return (
     <>
 
-      <Game/>
-
+      {scene1 === false ? <Menu setScene={setScene1}/> : null}
+      {scene1 ? <Game/> : null }
+      
     </>
   )
 }

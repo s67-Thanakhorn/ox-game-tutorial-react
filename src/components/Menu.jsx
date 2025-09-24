@@ -1,7 +1,15 @@
 import React from 'react'
 
-export default function Menu() {
+export default function Menu({setScene}) {
   return (
-    <div>Menu</div>
+    <>
+    
+        <button 
+        
+        onClick={() => setScene(prev => !prev)}
+        >Click to change scene</button>
+
+    </>
+    
   )
 }
