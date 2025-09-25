@@ -5,6 +5,7 @@ import GameCanvas from "./components/GameCanvas";
 import GameLogic from './components/GameLogic';
 import './App.css'
 import GridInput from './components/GridInput';
+import TurnShow from './components/TurnShow';
 
 function App() {
 
@@ -18,11 +19,14 @@ function App() {
     localStorage.setItem("grid", String(grid));
   }, [grid]);
 
+  const [turn, setTurn] = useState('O');
+
   return (
     <>
 
+      <TurnShow turn={turn}/>
       <GameCanvas gridProps={grid} />
-      <GameLogic gridProps={grid} />
+      <GameLogic gridProps={grid} turn={turn} setTurn={setTurn}/>
       <GridInput grid={grid} setGrid={setGrid} />
 
     </>
