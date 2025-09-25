@@ -25,6 +25,14 @@ function GameLogic({ gridProps, turn, setTurn }) {
             tableArray.push(row);
             i++;
         }
+
+        // เติมค่าไปในช่องบนสุด
+        for (let k = 0; k < gridCount; k++) {
+
+            tableArray[0][k] = k + 1
+
+        }
+
         return tableArray;
     };
 
@@ -47,30 +55,39 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
     useEffect(() => {
         drawAll();
+
+        winCheck()
+
         if (winCheck()) {
-            alert(`Player ${turn} wins!`);
-            setClick(false);
+            alert(`ห้ามใส่ ${turn} ที่ช่องนี้`);
+            setClick(false)
+
         } else if (table.flat().every(cell => cell !== '')) {
             alert('Draw');
-            setClick(false);
+            setClick(false)
+
         }
 
     }, [table]);
 
     const handleClick = e => {
+
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
 
-        console.log(x, y)
+        console.log(winCheck())
 
         let col = Math.floor(x / cellSize);
         let row = Math.floor(y / cellSize);
 
-        if (click && row < gridCount && table[row][col] === '') {
-            const newTable = table.map(r => [...r]);
-            newTable[row][col] = turn;
-            setTable(newTable);
-        }
+        if (!click) return;
+        if (row < 0 || col < 0 || row >= gridCount || col >= gridCount) return;
+        if (table[row][col] !== '') return;
+
+        const next = table.map(r => r.slice());
+        next[row][col] = turn;
+        setTable(next);
+
     };
 
     const drawAll = () => {
@@ -107,24 +124,19 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
         for (let i = 0; i < arr.length; i++) {
 
-            for (let j = 0; j < arr.length; j++) {
+            for (let j = i + 1; j < arr.length; j++) {
 
-                if (arr[i] !== arr[j]) {
+                if (arr[i] === arr[j] && arr.length > 1) {
 
 
-                    return false; //ถ้าเจอไม่เหมือน return false
+                    return true; //ถ้าเจอไม่เหมือน return true
+
                 }
 
             }
         }
 
-        if (arr.includes('')) { //ถ้ามีฟันหนูซักอันใน array ที่ส่งเข้ามา return false
-
-            return false;
-
-        }
-
-        return true; //ถ้า array เหมือนกันทั้งหมด return true
+        return false;
 
     }
 
@@ -138,12 +150,16 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
             for (let j = 0; j < row; j++) { // row  
 
-                checkBoard.push(table[i][j]);
+                if (table[i][j] !== '') {
+                    checkBoard.push(table[i][j]);
+
+                }
+
 
             }
             if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
 
-                console.log('แนวนอนชนะ');
+                console.log('แนวนอนซ้ำ');
                 return true;
 
             }
@@ -155,12 +171,15 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
             for (let j = 0; j < row; j++) { // row  
 
-                checkBoard.push(table[j][i]);
+                if (table[j][i] !== '') {
+                    checkBoard.push(table[j][i]);
+
+                }
 
             }
             if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
 
-                console.log('แนวตั้งชนะ');
+                console.log('แนวตั้งซ้ำ');
                 return true;
 
             }
@@ -168,43 +187,14 @@ function GameLogic({ gridProps, turn, setTurn }) {
             checkBoard.length = 0;
         }
 
-        for (let i = 0; i < row; i++) { // column
-
-            checkBoard.push(table[i][i]);
-
-        }
-
-        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-            console.log('แนวเฉียงขวา');
-            return true;
-
-        }
-
-        checkBoard.length = 0;
-
-        for (let i = 0; i < row; i++) { // column
-
-            checkBoard.push(table[i][(row - 1) - i]);
-
-        }
-
-        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-            console.log('แนวเฉียงซ้าย');
-            return true;
-
-        }
-
-        checkBoard.length = 0;
-
-
+        return false;
 
     };
 
     const resetGame = () => {
         setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
         setTurn(1);
+        setTable(createEmptyTable(gridCount))
         setClick(true);
     };
 
