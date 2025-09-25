@@ -7,12 +7,12 @@ function NumberInput({setTurn , turn}) {
         <form >
 
             <input 
-            type="text" 
+            type="number" 
             placeholder='ใส่ตัวเลข' 
             value={turn}
             style={{padding : 10}}
             
-            onChange={(e) => setTurn(e.target.value)}/>
+            onChange={(e) => setTurn(Number(e.target.value))}/>
 
 
         </form>

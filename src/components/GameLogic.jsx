@@ -56,10 +56,10 @@ function GameLogic({ gridProps, turn, setTurn }) {
     useEffect(() => {
         drawAll();
 
-        winCheck()
+        winCheck(table)
 
-        if (winCheck()) {
-            alert(`ห้ามใส่ ${turn} ที่ช่องนี้`);
+        if (winCheck(table)) {
+            
             setClick(false)
 
         } else if (table.flat().every(cell => cell !== '')) {
@@ -75,18 +75,25 @@ function GameLogic({ gridProps, turn, setTurn }) {
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
 
-        console.log(winCheck())
-
         let col = Math.floor(x / cellSize);
         let row = Math.floor(y / cellSize);
 
-        if (!click) return;
-        if (row < 0 || col < 0 || row >= gridCount || col >= gridCount) return;
-        if (table[row][col] !== '') return;
+        if (click && row < gridCount && table[row][col] === '') { // ห้ามคลิกเกิน canvas และ ช่องๆนั้นเป็นช่องว่าง 
 
-        const next = table.map(r => r.slice());
-        next[row][col] = turn;
-        setTable(next);
+            const next = table.map(r => r.slice());
+            next[row][col] = turn;
+
+            if (winCheck(next)) {
+
+                next[row][col] = '';
+                setTable(next);
+                return;
+
+            }
+
+            setTable(next);
+
+        }
 
     };
 
@@ -121,6 +128,8 @@ function GameLogic({ gridProps, turn, setTurn }) {
     }
 
     function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
+        
+        console.log(arr)
 
         for (let i = 0; i < arr.length; i++) {
 
@@ -128,7 +137,7 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
                 if (arr[i] === arr[j] && arr.length > 1) {
 
-
+                    alert(`ห้ามใส่ ${turn} ที่ช่องนี้`);
                     return true; //ถ้าเจอไม่เหมือน return true
 
                 }
@@ -140,7 +149,9 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
     }
 
-    const winCheck = () => {
+    const winCheck = (table) => {
+
+        console.log('Updateeeeeee')
 
         let row = table.length; //3
         const checkBoard = [];
@@ -155,11 +166,9 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
                 }
 
-
             }
             if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
 
-                console.log('แนวนอนซ้ำ');
                 return true;
 
             }
@@ -179,7 +188,6 @@ function GameLogic({ gridProps, turn, setTurn }) {
             }
             if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
 
-                console.log('แนวตั้งซ้ำ');
                 return true;
 
             }
@@ -193,7 +201,6 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
     const resetGame = () => {
         setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
-        setTurn(1);
         setTable(createEmptyTable(gridCount))
         setClick(true);
     };
