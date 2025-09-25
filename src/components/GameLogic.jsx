@@ -2,26 +2,26 @@ import React, { useEffect, useRef, useState } from 'react'
 import ResetButton from './ResetButton';
 import GameCanvas from './GameCanvas';
 
-function GameLogic({gridProps , turn , setTurn}) {
+function GameLogic({ gridProps, turn, setTurn }) {
 
     const boardSize = 600;
     const gridCount = Number(gridProps)
     const cellSize = boardSize / gridCount;
-    
+
 
     const createEmptyTable = (gridCount) => {
         const tableArray = [];
         let i = 0;
-        
+
         while (i < gridCount) {
             const row = [];
             let j = 0;
-            
+
             while (j < gridCount) {
                 row.push('');
                 j++;
             }
-            
+
             tableArray.push(row);
             i++;
         }
@@ -30,7 +30,7 @@ function GameLogic({gridProps , turn , setTurn}) {
 
     // ใช้กับ useState
 
-    
+
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -41,6 +41,7 @@ function GameLogic({gridProps , turn , setTurn}) {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
+
 
     }, []);
 
@@ -58,50 +59,51 @@ function GameLogic({gridProps , turn , setTurn}) {
     }, [table]);
 
     const handleClick = e => {
-    const x = e.nativeEvent.offsetX;
-    const y = e.nativeEvent.offsetY;
+        const x = e.nativeEvent.offsetX;
+        const y = e.nativeEvent.offsetY;
 
-    let col = Math.floor(x / cellSize);
-    let row = Math.floor(y / cellSize);
+        console.log(x, y)
 
-    if (click && row < gridCount && table[row][col] === '') {
-        const newTable = table.map(r => [...r]);
-        newTable[row][col] = turn;
-        setTable(newTable);
-    }
+        let col = Math.floor(x / cellSize);
+        let row = Math.floor(y / cellSize);
+
+        if (click && row < gridCount && table[row][col] === '') {
+            const newTable = table.map(r => [...r]);
+            newTable[row][col] = turn;
+            setTable(newTable);
+        }
     };
 
     const drawAll = () => {
         const ctx = ctxRef.current;
         ctx.clearRect(0, 0, 600, 700)
         drawMarks();
-        
+
     }
 
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
-        ctx.strokeStyle = "#f39899ff";
-        ctx.lineWidth = gridCount / gridCount*5;
-        for (let row = 0; row < gridCount; row++) {
-            for (let col = 0; col < gridCount; col++) {
-                const mark = table[row][col];
-                if (mark === 'O') {
-                    ctx.beginPath();
-                    ctx.arc(col * cellSize + (cellSize/2), row * cellSize + (cellSize/2), (cellSize*(1/3)), 0, 2 * Math.PI);
-                    ctx.stroke();
-                } else if (mark === 'X') {
-                    ctx.beginPath();
-                    ctx.moveTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.85));
-                    ctx.moveTo(col * cellSize + (cellSize*0.85), row * cellSize + (cellSize*0.15));
-                    ctx.lineTo(col * cellSize + (cellSize*0.15), row * cellSize + (cellSize*0.85));
-                    ctx.stroke();
-                }
+
+        // ฟอนต์สเกลตาม cellSize
+        const fontPx = Math.floor(cellSize * 0.4);
+        ctx.font = `${fontPx}px Arial`;
+
+        for (let i = 0; i < gridCount; i++) {
+
+            for (let j = 0; j < gridCount; j++) {
+
+                const cx = j * cellSize + cellSize / 2.8; // ศูนย์กลางแกน X ของช่อง 
+                const cy = i * cellSize + cellSize / 1.5; // ศูนย์กลางแกน Y ของช่อง 
+
+                ctx.fillText(table[i][j], cx, cy);
+
             }
+
         }
+
     }
-    
+
     function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
 
         for (let i = 0; i < arr.length; i++) {
@@ -170,7 +172,7 @@ function GameLogic({gridProps , turn , setTurn}) {
         for (let i = 0; i < row; i++) { // column
 
             checkBoard.push(table[i][i]);
-            
+
         }
 
         if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
@@ -184,8 +186,8 @@ function GameLogic({gridProps , turn , setTurn}) {
 
         for (let i = 0; i < row; i++) { // column
 
-            checkBoard.push(table[i][(row-1)-i]);
-            
+            checkBoard.push(table[i][(row - 1) - i]);
+
         }
 
         if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
@@ -196,7 +198,7 @@ function GameLogic({gridProps , turn , setTurn}) {
         }
 
         checkBoard.length = 0;
-        
+
 
 
     };
@@ -214,12 +216,12 @@ function GameLogic({gridProps , turn , setTurn}) {
             height="600"
             style={{ position: "absolute" }}
             onClick={handleClick}
-    
+
         > </canvas>
-        <ResetButton onReset={resetGame}/>
-        </>
-       
-        
+        <ResetButton onReset={resetGame} />
+    </>
+
+
     )
 }
 
