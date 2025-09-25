@@ -55,7 +55,6 @@ function GameLogic({ gridProps, turn, setTurn }) {
             setClick(false);
         }
 
-        setTurn(turn === 'O' ? 'X' : 'O');
     }, [table]);
 
     const handleClick = e => {
@@ -205,7 +204,7 @@ function GameLogic({ gridProps, turn, setTurn }) {
 
     const resetGame = () => {
         setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
-        setTurn('O');
+        setTurn(1);
         setClick(true);
     };
 

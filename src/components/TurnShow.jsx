@@ -4,7 +4,7 @@ function TurnShow({turn}) {
   return (
     <>
     
-        <h1>Turn : {turn} </h1>
+        <h1>Number select : {turn} </h1>
 
     </>
   )
