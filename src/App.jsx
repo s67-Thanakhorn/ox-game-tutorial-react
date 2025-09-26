@@ -26,7 +26,7 @@ function App() {
     <>
 
       <TurnShow turn={turn}/>
-      <NumberInput setTurn = {setTurn} turn={turn}/>
+      <NumberInput setTurn = {setTurn} turn={turn} grid= {grid}/>
       <GameCanvas gridProps={grid} />
       <GameLogic gridProps={grid} turn={turn} setTurn={setTurn}/>
       <GridInput grid={grid} setGrid={setGrid} />

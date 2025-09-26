@@ -63,7 +63,7 @@ function GameLogic({ gridProps, turn, setTurn }) {
             setClick(false)
 
         } else if (table.flat().every(cell => cell !== '')) {
-            alert('Draw');
+            alert('You win!');
             setClick(false)
 
         }
@@ -128,8 +128,6 @@ function GameLogic({ gridProps, turn, setTurn }) {
     }
 
     function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
-        
-        console.log(arr)
 
         for (let i = 0; i < arr.length; i++) {
 
@@ -150,8 +148,6 @@ function GameLogic({ gridProps, turn, setTurn }) {
     }
 
     const winCheck = (table) => {
-
-        console.log('Updateeeeeee')
 
         let row = table.length; //3
         const checkBoard = [];
