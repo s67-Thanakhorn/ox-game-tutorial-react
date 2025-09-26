@@ -6,13 +6,14 @@ import Menu from './components/Menu'
 function App() {
 
   // ตัวแปรไว้ set state ของ components
-  const [ scene1 , setScene1] = useState(false)
+  const [ scene1 , setScene1] = useState('')
 
   return (
     <>
   
-      {scene1 === false ? <Menu setScene={setScene1}/> : null}
-      {scene1 ? <Game/> : null }
+      {scene1 === '' ? <Menu setScene={setScene1}/> : null}
+      {scene1 ? <Game scene = {scene1}/> : null }
+
       
     </>
   )

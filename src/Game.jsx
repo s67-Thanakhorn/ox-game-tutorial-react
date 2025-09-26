@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 
 import GameCanvas from "./components/GameCanvas";
-import GameLogic from './components/GameLogic';
+import GameLogicOnline from './components/Online/GameLogicOnline';
+import GameLogicLocal from './components/Local/GameLogicLocal';
 import './App.css'
 import GridInput from './components/GridInput';
 import ShowText from './components/ShowText';
-function Game() {
+function Game({scene    }) {
 
     
     const [grid, setGrid] = useState(() => {
@@ -24,7 +25,10 @@ function Game() {
         <>
             <ShowText turn={turn}/>
             <GameCanvas gridProps={grid} />
-            <GameLogic gridProps={grid} turn={turn} setTurn={setTurn} />
+
+            {scene === 'Onlineplayer' ? <GameLogicOnline gridProps={grid} turn={turn} setTurn={setTurn} /> : null}
+            {scene === 'Singleplayer' ? <GameLogicLocal gridProps={grid} turn={turn} setTurn={setTurn} /> : null}
+
             <GridInput grid={grid} setGrid={setGrid} />
 
         </>

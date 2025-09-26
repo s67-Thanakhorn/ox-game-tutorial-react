@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import ResetButton from './ResetButton';
-import GameCanvas from './GameCanvas';
-import ShowText from './ShowText';
-import { supabase } from '../supabaseClient';
+import ResetButton from '../ResetButton';
+import GameCanvas from '../GameCanvas';
+import ShowText from '../ShowText';
 
 function GameLogic({ gridProps , turn , setTurn}) {
 
@@ -31,68 +30,8 @@ function GameLogic({ gridProps , turn , setTurn}) {
     };
 
     // ใช้กับ useState
-
     
     const [table, setTable] = useState(createEmptyTable(gridCount));
-    const [winner, setWinner] = useState('');
-
-    const [id, setId] = useState(0); // ตัวแปรเก็บค่าไอดี
-    const displayId = Array.isArray(id) ? id[0] : id; // เนื่องจากไอดีที่ได้จากฟังก์ชัน map เป็น array ต้องแปลงเป็น int
-
-
-    // json handle
-
-    const [tablejson, setTablejson] = useState(''); // ตัวแปรเก็บค่าตารางที่เป็น Object แบบ json
-
-
-    const fetchTable = () => { // ฟังก์ชันเซ็ตค่า tablejson เป็น table array => object json
-
-        setTablejson(JSON.stringify(table)) 
-
-    }
-
-    // createRoom ฟังก์ชันสร้างห้อง หรือ เพิ่ม row ใหม่เข้าไปใน supabase
-
-    const createRoom = async () => {
-
-        const { data, error } = await supabase.from('game_tables').insert([ // หา table ที่ชื่อ game_tables แล้ว insert หรือเพิ่มข้อมูลเข้าไป
-            { board_state: tablejson, current_turn: turn, winner: winner } // เพิ่มข้อมูลเป็น row ใหม่ขึ้นมาตาม column ใน supabase
-
-        ]).select('*') // เลือกให้เพิ่มทั้งหมด
-
-        if (error) { //ถ้าเจอ error ให้ log สาเหตุใส่ใน console
-
-            console.log('Error', error)
-
-        } else { //ถ้าไม่เจอ error
-
-            console.log('Create Room Complete!', data.map((n) => { //log ว่าทำสำเร็จ แล้วบอกค่าเลขห้องมา โดยใช้ map วนใน json object แล้วเอาแค่ id ออกมา
-                return n.id;
-            }))
-
-            setId(data.map((n) => { //set ค่า i เป็นค่า id ที่เราใช้ map วน
-                return n.id;
-            }))
-        }
-
-    }
-
-    // update ฟังก์ชันอัพเดตค่าใน row เมื่อมีการ click เกิดขึ้น (ใช้ร้วมกับ useEffect table event)
-
-    const updateTable = async () => {
-        const { data, error } = await supabase 
-            .from('game_tables') // เรียก table ที่ชื่อ game_tables ใน supabase
-            .update({ board_state: tablejson, current_turn: turn, winner: winner }) // กำหนดค่าใน row 
-            .eq('id', id) // อ้างอิง id เพื่อแก้ไขข้อมูลให้ถูก row 
-            .select('*'); // เพิ่มข้อมูลเข้าไปทุกๆ row
-
-        if (error) { // ถ้า error ให้ log ค่าออกมา
-            console.error('Error updating user data:', error.message);
-        } else { // ถ้าไม่เจอก็บอกว่าสำเร็จ
-            console.log('User data updated successfully:', data);
-        }
-    };
-
 
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -105,29 +44,22 @@ function GameLogic({ gridProps , turn , setTurn}) {
         ctxRef.current = ctx;
         drawAll();
 
-        createRoom(); // ใช้ฟังก์ชัน createRoom เมื่อมีการ mount 
-
     }, []);
 
     useEffect(() => {
 
-        fetchTable(); // ใช้ฟังก์ชัน fetchTable เมื่อค่าใน table เปลี่ยนแปลง
-        updateTable(); // ใช้ฟังก์ชัน updateTable เมื่อค่าใน table เปลี่ยนแปลง
-
         drawAll();
         if (winCheck()) {
             alert(`Player ${turn} wins!`);
-            setWinner(turn)
+
             setClick(false);
         } else if (table.flat().every(cell => cell !== '')) {
             alert('Draw');
-            setWinner('Draw')
+
             setClick(false);
         }
 
         setTurn(turn === 'O' ? 'X' : 'O');
-
-        console.log(id);
 
     }, [table]);
 
@@ -155,25 +87,24 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
-        ctx.strokeStyle = "#f39899ff";
-        ctx.lineWidth = gridCount / gridCount * 5;
-        for (let row = 0; row < gridCount; row++) {
-            for (let col = 0; col < gridCount; col++) {
-                const mark = table[row][col];
-                if (mark === 'O') {
-                    ctx.beginPath();
-                    ctx.arc(col * cellSize + (cellSize / 2), row * cellSize + (cellSize / 2), (cellSize * (1 / 3)), 0, 2 * Math.PI);
-                    ctx.stroke();
-                } else if (mark === 'X') {
-                    ctx.beginPath();
-                    ctx.moveTo(col * cellSize + (cellSize * 0.15), row * cellSize + (cellSize * 0.15));
-                    ctx.lineTo(col * cellSize + (cellSize * 0.85), row * cellSize + (cellSize * 0.85));
-                    ctx.moveTo(col * cellSize + (cellSize * 0.85), row * cellSize + (cellSize * 0.15));
-                    ctx.lineTo(col * cellSize + (cellSize * 0.15), row * cellSize + (cellSize * 0.85));
-                    ctx.stroke();
-                }
+
+        // ฟอนต์สเกลตาม cellSize
+        const fontPx = Math.floor(cellSize * 0.4);
+        ctx.font = `${fontPx}px Arial`;
+
+        for (let i = 0; i < gridCount; i++) {
+
+            for (let j = 0; j < gridCount; j++) {
+
+                const cx = j * cellSize + cellSize / 2.8; // ศูนย์กลางแกน X ของช่อง 
+                const cy = i * cellSize + cellSize / 1.5; // ศูนย์กลางแกน Y ของช่อง 
+
+                ctx.fillText(table[i][j], cx, cy);
+
             }
+
         }
+
     }
 
     function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
@@ -283,12 +214,11 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
     return (<>
         
-        <h2 style={{position : 'relative' , left : 450 , bottom : 50}}>Room ID : {displayId || 'creating...'}</h2>
         <canvas
             ref={canvasRef}
             width="600"
             height="600"
-            style={{ position: "absolute", bottom : 325 , left : 12  }}
+            style={{ position: "absolute", bottom : 40 , left : 12  }}
             onClick={handleClick}
         > </canvas>
         <ResetButton onReset={resetGame} />
