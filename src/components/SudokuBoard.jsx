@@ -54,7 +54,7 @@ export default function SudokuBoard() {
         gridTemplateColumns: 'repeat(5, 80px)',
         gap: '4px',
         padding: '6px',
-        border: '2px solid #ff6cd5ff',
+        border: '2px solid #861ce3ff',
         borderRadius: '6px',
         width: 'max-content',
       }}
