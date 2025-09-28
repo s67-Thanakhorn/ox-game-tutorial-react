@@ -10,7 +10,7 @@ function GameCanvas( {gridProps}) {
     const cellSize = boardSize / gridCount;
     
     function drawGrid() {
-      ctx.strokeStyle = "pink"; 
+      ctx.strokeStyle = "purple"; 
       ctx.lineWidth = 5;
       ctx.beginPath();
       //แนวตั้ง
