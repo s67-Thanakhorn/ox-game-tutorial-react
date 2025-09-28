@@ -81,7 +81,7 @@ function GameLogic({gridProps , turn , setTurn}) {
 
     const drawMarks = () => {
         const ctx = ctxRef.current;
-        ctx.strokeStyle = "#f39899ff";
+        ctx.strokeStyle = "#19169bff";
         ctx.lineWidth = gridCount / gridCount*5;
         for (let row = 0; row < gridCount; row++) {
             for (let col = 0; col < gridCount; col++) {
