@@ -53,27 +53,33 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
     // createRoom ฟังก์ชันสร้างห้อง หรือ เพิ่ม row ใหม่เข้าไปใน supabase
 
+
+    // เดิม: serializeBoard() ส่งแค่อาร์เรย์ table
+// ใหม่: ส่งเป็น JSON ที่มีทั้ง grid_count และ board
+    const serializeBoard = () => JSON.stringify({
+    grid_count: gridCount, // ค่านี้มาจาก GridInput ผ่าน prop
+    board: table           // กระดานปัจจุบัน
+    });
+
     const createRoom = async () => {
+const payload = {
+    board_state: serializeBoard(), // 👈 เก็บ grid_count อยู่ในนี้แล้ว
+    current_turn: turn,
+    winner: winner
+  };
 
-        const { data, error } = await supabase.from('game_tables').insert([ // หา table ที่ชื่อ game_tables แล้ว insert หรือเพิ่มข้อมูลเข้าไป
-            { board_state: tablejson, current_turn: turn, winner: winner } // เพิ่มข้อมูลเป็น row ใหม่ขึ้นมาตาม column ใน supabase
+  const { data, error } = await supabase
+    .from('game_tables')
+    .insert([payload])
+    .select('id')
+    .single();
 
-        ]).select('*') // เลือกให้เพิ่มทั้งหมด
-
-        if (error) { //ถ้าเจอ error ให้ log สาเหตุใส่ใน console
-
-            console.log('Error', error)
-
-        } else { //ถ้าไม่เจอ error
-
-            console.log('Create Room Complete!', data.map((n) => { //log ว่าทำสำเร็จ แล้วบอกค่าเลขห้องมา โดยใช้ map วนใน json object แล้วเอาแค่ id ออกมา
-                return n.id;
-            }))
-
-            setId(data.map((n) => { //set ค่า i เป็นค่า id ที่เราใช้ map วน
-                return n.id;
-            }))
-        }
+  if (error) {
+    console.log('Error', error);
+  } else {
+    console.log('Create Room Complete! id =', data.id);
+    setId(data.id); // เก็บเป็นเลขเดียว
+  }
 
     }
 
@@ -287,7 +293,7 @@ function GameLogic({ gridProps , turn , setTurn}) {
             ref={canvasRef}
             width="600"
             height="600"
-            style={{ position: "absolute", bottom : 40 , left : 12  }}
+            style={{ position: "absolute", bottom : 250 , left : 12  }}
             onClick={handleClick}
         > </canvas>
         <ResetButton onReset={resetGame} />
