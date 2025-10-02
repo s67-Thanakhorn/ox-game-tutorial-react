@@ -32,12 +32,14 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
     // ใช้กับ useState
 
-    
+
     const [table, setTable] = useState(createEmptyTable(gridCount));
     const [winner, setWinner] = useState('');
 
     const [id, setId] = useState(0); // ตัวแปรเก็บค่าไอดี
     const displayId = Array.isArray(id) ? id[0] : id; // เนื่องจากไอดีที่ได้จากฟังก์ชัน map เป็น array ต้องแปลงเป็น int
+    // ADD: room id ที่ผู้เล่นกรอกตอน Join
+    const savedRoomId = localStorage.getItem('roomId') || '';
 
 
     // json handle
@@ -55,15 +57,15 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
 
     // เดิม: serializeBoard() ส่งแค่อาร์เรย์ table
-// ใหม่: ส่งเป็น JSON ที่มีทั้ง grid_count และ board
+    // ใหม่: ส่งเป็น JSON ที่มีทั้ง grid_count และ board
     const serializeBoard = () => JSON.stringify({
-    grid_count: gridCount, // ค่านี้มาจาก GridInput ผ่าน prop
-    board: table           // กระดานปัจจุบัน
+        grid_count: gridCount, // ค่านี้มาจาก GridInput ผ่าน prop
+        board: table           // กระดานปัจจุบัน
     });
 
     const createRoom = async () => {
 const payload = {
-    board_state: serializeBoard(), // 👈 เก็บ grid_count อยู่ในนี้แล้ว
+    board_state: serializeBoard(), // เก็บ grid_count อยู่ในนี้แล้ว
     current_turn: turn,
     winner: winner
   };
@@ -79,25 +81,27 @@ const payload = {
   } else {
     console.log('Create Room Complete! id =', data.id);
     setId(data.id); // เก็บเป็นเลขเดียว
-  }
-
+    localStorage.setItem('roomId', String(data.id));   // เติม
+    localStorage.setItem('scene1', 'Onlineplayer');    // จะได้รีโหลดแล้วอยู่หน้าเกม
     }
+};
 
     // update ฟังก์ชันอัพเดตค่าใน row เมื่อมีการ click เกิดขึ้น (ใช้ร้วมกับ useEffect table event)
 
     const updateTable = async () => {
         const { data, error } = await supabase 
             .from('game_tables') // เรียก table ที่ชื่อ game_tables ใน supabase
-            .update({ board_state: tablejson, current_turn: turn, winner: winner }) // กำหนดค่าใน row 
+            .update({
+                board_state: serializeBoard(),   // ใช้รูปแบบเดียวกับ createRoom
+                current_turn: turn,
+                winner: winner
+            })
             .eq('id', id) // อ้างอิง id เพื่อแก้ไขข้อมูลให้ถูก row 
             .select('*'); // เพิ่มข้อมูลเข้าไปทุกๆ row
 
-        if (error) { // ถ้า error ให้ log ค่าออกมา
-            console.error('Error updating user data:', error.message);
-        } else { // ถ้าไม่เจอก็บอกว่าสำเร็จ
-            console.log('User data updated successfully:', data);
-        }
+        if (error) console.error('Error updating user data:', error.message);
     };
+
 
 
     const canvasRef = useRef(null);
@@ -110,6 +114,13 @@ const payload = {
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
         drawAll();
+
+        // ADD: ถ้าเป็นผู้ Join (มี roomId) → ใช้ห้องนั้น และไม่ต้องสร้างใหม่
+        if (savedRoomId) {
+            setId(Number(savedRoomId));
+            return; // สำคัญ: ไม่เรียก createRoom()
+        }
+
 
         createRoom(); // ใช้ฟังก์ชัน createRoom เมื่อมีการ mount 
 
@@ -136,6 +147,7 @@ const payload = {
         console.log(id);
 
     }, [table]);
+
 
     const handleClick = e => {
         const x = e.nativeEvent.offsetX;
@@ -286,8 +298,35 @@ const payload = {
         setClick(true);
     };
 
+    // ADD: โหลดกระดาน/ตาปัจจุบันจากห้องนั้นครั้งเดียว (ยังไม่ realtime)
+    useEffect(() => {
+        if (!displayId) return;
+
+        (async () => {
+            const { data, error } = await supabase
+                .from('game_tables')
+                .select('*')
+                .eq('id', displayId)
+                .single();
+
+            if (error || !data) return;
+
+            // board_state บางแถวเป็น string JSON, บางแถวเป็น JSON object
+            try {
+                const bs = data.board_state;
+                const parsed = (typeof bs === 'string') ? JSON.parse(bs) : bs;
+                const board = Array.isArray(parsed) ? parsed : parsed.board; // รองรับ {grid_count, board}
+                setTable(board);
+            } catch { }
+
+            setTurn(data.current_turn);
+            setWinner(data.winner || '');
+        })();
+    }, [displayId]);
+
+
+
     return (<>
-        
         <h2 style={{position : 'relative' , left : 450 , bottom : 50}}>Room ID : {displayId || 'creating...'}</h2>
         <canvas
             ref={canvasRef}
