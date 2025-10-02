@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function Menu({ setScene }) {
+export default function Menu({ setScene , setPlayer1 ,setPlayer2 }) {
   const [joinId, setJoinId] = useState('');
 
   return (
@@ -15,6 +15,8 @@ export default function Menu({ setScene }) {
             localStorage.removeItem('roomId');              // host จะสร้างห้องใหม่ในหน้าเกม
             localStorage.setItem('scene1', 'Onlineplayer'); // เก็บ scene
             setScene('Onlineplayer');
+            setPlayer1(true);
+           
           }}
         >
           Create room
@@ -27,6 +29,7 @@ export default function Menu({ setScene }) {
           localStorage.setItem('roomId', joinId.trim());   // เลขห้องจากเพื่อน
           localStorage.setItem('scene1', 'Onlineplayer');  // เก็บ scene
           setScene('Onlineplayer');
+          setPlayer2(true);
         }}
       >
         <h2>

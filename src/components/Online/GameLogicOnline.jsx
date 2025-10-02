@@ -4,7 +4,7 @@ import GameCanvas from '../GameCanvas';
 import ShowText from '../ShowText';
 import { supabase } from '../../supabaseClient';
 
-function GameLogic({ gridProps , turn , setTurn}) {
+function GameLogic({ gridProps, turn, setTurn, player1, player2 }) {
 
   const boardSize = 600;
   const gridCount = Number(gridProps)
@@ -20,6 +20,8 @@ function GameLogic({ gridProps , turn , setTurn}) {
     return tableArray;
   };
 
+  const [text, setText] = useState('');
+
   const [table, setTable] = useState(createEmptyTable(gridCount));
   const [winner, setWinner] = useState('');
 
@@ -27,9 +29,12 @@ function GameLogic({ gridProps , turn , setTurn}) {
   const displayId = Array.isArray(id) ? id[0] : id;
   const savedRoomId = localStorage.getItem('roomId') || '';
 
-  const [tablejson, setTablejson] = useState('');
+  let myId = localStorage.getItem("my_uuid");
+  if (!myId) {
+    myId = crypto.randomUUID();
+    localStorage.setItem("my_uuid", myId);
+  }
 
-  const fetchTable = () => setTablejson(JSON.stringify(table));
 
   const serializeBoard = () => JSON.stringify({
     grid_count: gridCount,
@@ -37,10 +42,14 @@ function GameLogic({ gridProps , turn , setTurn}) {
   });
 
   const createRoom = async () => {
+
     const payload = {
       board_state: serializeBoard(),
       current_turn: turn,
-      winner: winner
+      winner: winner,
+      status: text,
+      player1_id: myId,   // คนสร้างห้องคือ Player1
+      player2_id: null,
     };
 
     const { data, error } = await supabase
@@ -59,28 +68,36 @@ function GameLogic({ gridProps , turn , setTurn}) {
     }
   };
 
-  const updateTable = async () => {
+  // สำหรับ player2
+  const joinRoom = async () => {
     const { error } = await supabase
       .from('game_tables')
-      .update({
-        board_state: serializeBoard(),
-        current_turn: turn,
-        winner: winner
-      })
-      .eq('id', id)
-      .select('*');
+      .update({ player2_id: myId })
+      .eq('id', displayId)
+      .select('*')
+      .is('player2_id', null)
+      .single();
 
-    if (error) console.error('Error updating user data:', error.message);
+    if (error) {
+
+      console.error();
+
+    }
   };
+
 
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
-  const [click, setClick] = useState(true);
+  const [click, setClick] = useState(false);
 
   // --- FLAG ป้องกันลูป: ถ้าอัปเดตมาจาก realtime จะไม่ persist ซ้ำ
   const fromServerRef = useRef(false);
 
   useEffect(() => {
+
+
+    console.log(player1, player2)
+
     const c = canvasRef.current;
     const ctx = c.getContext("2d");
     ctxRef.current = ctx;
@@ -90,9 +107,21 @@ function GameLogic({ gridProps , turn , setTurn}) {
       setId(Number(savedRoomId));
       return;
     }
-    createRoom();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    if (player1 === true) {
+
+      createRoom();
+
+    }
+
   }, []);
+
+
+  useEffect(() => {
+    if (player2 === true) {
+      joinRoom();
+    }
+  }, [player2, displayId]);
 
   // โหลดสถานะครั้งแรกของห้องนั้น
   useEffect(() => {
@@ -105,18 +134,34 @@ function GameLogic({ gridProps , turn , setTurn}) {
         .eq('id', displayId)
         .single();
 
-      if (error || !data) return;
+      if (error || !data) {
+
+        console.log('dont find room')
+        setText('Dont find room')
+
+        return;
+
+      };
+
+      if (data.player1_id && data.player2_id) {
+        setText('IN GAME');
+      } else {
+        setText('Waiting...');
+      }
+
       try {
         const bs = data.board_state;
         const parsed = (typeof bs === 'string') ? JSON.parse(bs) : bs;
         const board = Array.isArray(parsed) ? parsed : parsed.board;
         setTable(board);
-      } catch {}
+      } catch { }
       setTurn(data.current_turn);
       setWinner(data.winner || '');
+
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayId]);
+
 
   // --- REALTIME SUBSCRIBE (เพิ่มใหม่)
   useEffect(() => {
@@ -132,8 +177,26 @@ function GameLogic({ gridProps , turn , setTurn}) {
           table: 'game_tables',
           filter: `id=eq.${displayId}`
         },
+
         (payload) => {
           const row = payload.new;
+
+          if (row.winner) {
+
+            setText(`Winner is ${row.winner}`);
+
+          }
+
+          else if (row.player1_id && row.player2_id) { // ถ้าคนก็ขึ้นว่า ingame และสามารถเล่นเกมได้
+            setClick(true)
+            setText('IN GAME');
+            
+          } else { // ถ้าคนไม่ครบให้ขึ้นว่าเล่นไม่ได้ และ คลิกทีตารางไม่ได้
+            setClick(false) 
+            setText('Waiting...');
+            
+          }
+
           try {
             const bs = row.board_state;
             const parsed = (typeof bs === 'string') ? JSON.parse(bs) : bs;
@@ -172,12 +235,12 @@ function GameLogic({ gridProps , turn , setTurn}) {
     // เช็คผลชนะ/เสมอ แล้ว persist สถานะขึ้น DB
     let finalWinner = '';
     if (winCheck()) {
-      alert(`Player ${turn} wins!`);
+
       finalWinner = turn;
       setWinner(finalWinner);
       setClick(false);
     } else if (table.flat().every(cell => cell !== '')) {
-      alert('Draw');
+
       finalWinner = 'Draw';
       setWinner(finalWinner);
       setClick(false);
@@ -191,25 +254,30 @@ function GameLogic({ gridProps , turn , setTurn}) {
     // ตั้งตาถัดไปใน state ฝั่ง local (ถ้าเกมยังไม่จบ)
     if (!finalWinner) setTurn(nextTurn);
 
-    console.log('room id =', id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table]);
 
   const persist = async ({ board, currentTurn, finalWinner }) => {
+
     if (!displayId) return;
     const payload = {
       board_state: JSON.stringify({ grid_count: gridCount, board }),
       current_turn: currentTurn,
-      winner: finalWinner || ''
+      winner: finalWinner || '',
+      status: text,
     };
     const { error } = await supabase
       .from('game_tables')
       .update(payload)
       .eq('id', displayId);
     if (error) console.error('Persist error:', error.message);
+
   };
 
   const handleClick = e => {
+
+    if (!click) return;        
+
     const x = e.nativeEvent.offsetX;
     const y = e.nativeEvent.offsetY;
 
@@ -294,15 +362,20 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
   return (
     <>
-      
-      <h2 style={{position : 'relative', left : '450px'}}>
+      <h2 style={{ display: 'inline' }}>Status : {text}</h2>
+      <h2 style={{ position: 'relative', left: '450px', bottom: '40px' }}>
         Room ID : {displayId || 'creating...'}
       </h2>
+
+
       <canvas
         ref={canvasRef}
         width="600vh"
         height="600vh"
-        style={{ position: "absolute"  }}
+        style={{ position: "absolute",
+          pointerEvents: click ? "auto" : "none",
+          cursor: click ? "pointer" : "not-allowed",
+         }}
         onClick={handleClick}
       />
       <ResetButton onReset={resetGame} />

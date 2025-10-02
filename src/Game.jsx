@@ -7,7 +7,7 @@ import './App.css';
 import GridInput from './components/GridInput';
 import ShowText from './components/ShowText';
 
-export default function Game({ scene, setScene }) {
+export default function Game({ scene, setScene , player1 , player2 }) {
   const [grid, setGrid] = useState(() => {
     const saved = localStorage.getItem("grid");
     const n = Number(saved);
@@ -24,8 +24,6 @@ export default function Game({ scene, setScene }) {
   const leaveRoom = () => {
     localStorage.removeItem('scene1');
     localStorage.removeItem('roomId');
-    localStorage.removeItem('symbol');     // ถ้ามีใช้
-    localStorage.removeItem('join_only');  // ถ้ามีใช้
     setScene(''); // กลับเมนู
   };
 
@@ -51,7 +49,7 @@ export default function Game({ scene, setScene }) {
 
       <GameCanvas gridProps={grid} sizeProps = {scene} />
       {scene === 'Onlineplayer' ? (
-        <GameLogicOnline gridProps={grid} turn={turn} setTurn={setTurn} />
+        <GameLogicOnline gridProps={grid} turn={turn} setTurn={setTurn} player1={player1} player2={player2}/>
       ) : null}
       {scene === 'Singleplayer' ? (
         <GameLogicLocal gridProps={grid} turn={turn} setTurn={setTurn} />
