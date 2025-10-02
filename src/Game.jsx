@@ -40,10 +40,16 @@ export default function Game({ scene, setScene }) {
             ออกจากห้อง
           </button>
         )}
+
+        {scene === 'Singleplayer' && (
+          <button onClick={leaveRoom} style={{ padding: '6px 10px', zIndex: 1000 }}>
+            ออกจากห้อง
+          </button>
+        )}
       </div>
 
 
-      <GameCanvas gridProps={grid} />
+      <GameCanvas gridProps={grid} sizeProps = {scene} />
       {scene === 'Onlineplayer' ? (
         <GameLogicOnline gridProps={grid} turn={turn} setTurn={setTurn} />
       ) : null}

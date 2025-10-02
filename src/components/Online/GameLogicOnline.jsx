@@ -294,14 +294,15 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
   return (
     <>
-      <h2 style={{position : 'relative' , left : 450 , bottom : 50}}>
+      
+      <h2 style={{position : 'relative', left : '450px'}}>
         Room ID : {displayId || 'creating...'}
       </h2>
       <canvas
         ref={canvasRef}
-        width="600"
-        height="600"
-        style={{ position: "absolute", bottom : 250 , left : 12  }}
+        width="600vh"
+        height="600vh"
+        style={{ position: "absolute"  }}
         onClick={handleClick}
       />
       <ResetButton onReset={resetGame} />

@@ -215,12 +215,12 @@ function GameLogic({ gridProps , turn , setTurn}) {
     return (<>
         
         <canvas
-            ref={canvasRef}
-            width="600"
-            height="600"
-            style={{ position: "absolute", bottom : 40 , left : 12  }}
-            onClick={handleClick}
-        > </canvas>
+        ref={canvasRef}
+        width="600vh"
+        height="600vh"
+        style={{ position: "absolute"  }}
+        onClick={handleClick}
+      />
         <ResetButton onReset={resetGame} />
     </>
 

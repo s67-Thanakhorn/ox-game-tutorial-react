@@ -38,7 +38,7 @@ export default function Menu({ setScene }) {
             value={joinId}
             onChange={(e) => setJoinId(e.target.value)}
           />
-          <input type="submit" />
+          <input type="submit" style={{margin : '10px', padding : '5px'}} value={'Enter'}/>
         </h2>
       </form>
 
@@ -50,7 +50,7 @@ export default function Menu({ setScene }) {
             setScene('Singleplayer');
           }}
         >
-          Click here
+          Click here!
         </button>
       </h2>
     </>
