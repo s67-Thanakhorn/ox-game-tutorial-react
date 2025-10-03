@@ -22,12 +22,12 @@ function GridInput({ grid , setGrid }) {
                 type="text"
                 onChange={(e) => setGrid(e.target.value)}
                 placeholder='ใส่ขนาดของตาราง'
-                style={{ position: 'relative', padding: 5, top:550 }} 
+                style={{ position: 'relative', padding: 10, top: '540px' }} 
                 />
                 
                 <button 
                 onClick={apply} 
-                style={{position : 'relative',padding : 5, top : 550, margin : 10}}
+                style={{position : 'relative', padding : 10, top : '540px', margin : '10px'}}
                 >ตกลง</button>
 
         </div>

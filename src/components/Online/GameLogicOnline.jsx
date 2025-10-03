@@ -4,297 +4,383 @@ import GameCanvas from '../GameCanvas';
 import ShowText from '../ShowText';
 import { supabase } from '../../supabaseClient';
 
-function GameLogic({ gridProps , turn , setTurn}) {
+function GameLogic({ gridProps, turn, setTurn, player1, player2 }) {
 
-    const boardSize = 600;
-    const gridCount = Number(gridProps)
-    const cellSize = boardSize / gridCount;
+  const boardSize = 600;
+  const gridCount = Number(gridProps)
+  const cellSize = boardSize / gridCount;
 
-    // สร้าง array 2D ขนาด n*n
-    const createEmptyTable = (gridCount) => {
-        const tableArray = [];
-        let i = 0;
+  const createEmptyTable = (gridCount) => {
+    const tableArray = [];
+    for (let i = 0; i < gridCount; i++) {
+      const row = [];
+      for (let j = 0; j < gridCount; j++) row.push('');
+      tableArray.push(row);
+    }
+    return tableArray;
+  };
 
-        while (i < gridCount) {
-            const row = [];
-            let j = 0;
+  const [text, setText] = useState('');
 
-            while (j < gridCount) {
-                row.push('');
-                j++;
-            }
+  const [table, setTable] = useState(createEmptyTable(gridCount));
+  const [winner, setWinner] = useState('');
 
-            tableArray.push(row);
-            i++;
-        }
-        return tableArray;
+  const [id, setId] = useState(0);
+  const displayId = Array.isArray(id) ? id[0] : id;
+  const savedRoomId = localStorage.getItem('roomId') || '';
+
+  let myId = localStorage.getItem("my_uuid");
+  if (!myId) {
+    myId = crypto.randomUUID();
+    localStorage.setItem("my_uuid", myId);
+  }
+
+
+  const serializeBoard = () => JSON.stringify({
+    grid_count: gridCount,
+    board: table
+  });
+
+  const createRoom = async () => {
+
+    const payload = {
+      board_state: serializeBoard(),
+      current_turn: turn,
+      winner: winner,
+      status: text,
+      player1_id: myId,   // คนสร้างห้องคือ Player1
+      player2_id: null,
     };
 
-    // ใช้กับ useState
+    const { data, error } = await supabase
+      .from('game_tables')
+      .insert([payload])
+      .select('id')
+      .single();
 
-    
-    const [table, setTable] = useState(createEmptyTable(gridCount));
-    const [winner, setWinner] = useState('');
+    if (error) {
+      console.log('Error', error);
+    } else {
+      console.log('Create Room Complete! id =', data.id);
+      setId(data.id);
+      localStorage.setItem('roomId', String(data.id));
+      localStorage.setItem('scene1', 'Onlineplayer');
+    }
+  };
 
-    const [id, setId] = useState(0); // ตัวแปรเก็บค่าไอดี
-    const displayId = Array.isArray(id) ? id[0] : id; // เนื่องจากไอดีที่ได้จากฟังก์ชัน map เป็น array ต้องแปลงเป็น int
+  // สำหรับ player2
+  const joinRoom = async () => {
+    const { error } = await supabase
+      .from('game_tables')
+      .update({ player2_id: myId })
+      .eq('id', displayId)
+      .select('*')
+      .is('player2_id', null)
+      .single();
+
+    if (error) {
+
+      console.error();
+
+    }
+  };
 
 
-    // json handle
+  const canvasRef = useRef(null);
+  const ctxRef = useRef(null);
+  const [click, setClick] = useState(false);
 
-    const [tablejson, setTablejson] = useState(''); // ตัวแปรเก็บค่าตารางที่เป็น Object แบบ json
+  // --- FLAG ป้องกันลูป: ถ้าอัปเดตมาจาก realtime จะไม่ persist ซ้ำ
+  const fromServerRef = useRef(false);
+
+  useEffect(() => {
 
 
-    const fetchTable = () => { // ฟังก์ชันเซ็ตค่า tablejson เป็น table array => object json
+    console.log(player1, player2)
 
-        setTablejson(JSON.stringify(table)) 
+    const c = canvasRef.current;
+    const ctx = c.getContext("2d");
+    ctxRef.current = ctx;
+    drawAll();
+
+    if (savedRoomId) {
+      setId(Number(savedRoomId));
+      return;
+    }
+
+    if (player1 === true) {
+
+      createRoom();
 
     }
 
-    // createRoom ฟังก์ชันสร้างห้อง หรือ เพิ่ม row ใหม่เข้าไปใน supabase
+  }, []);
 
-    const createRoom = async () => {
 
-        const { data, error } = await supabase.from('game_tables').insert([ // หา table ที่ชื่อ game_tables แล้ว insert หรือเพิ่มข้อมูลเข้าไป
-            { board_state: tablejson, current_turn: turn, winner: winner } // เพิ่มข้อมูลเป็น row ใหม่ขึ้นมาตาม column ใน supabase
+  useEffect(() => {
+    if (player2 === true) {
+      joinRoom();
+    }
+  }, [player2, displayId]);
 
-        ]).select('*') // เลือกให้เพิ่มทั้งหมด
+  // โหลดสถานะครั้งแรกของห้องนั้น
+  useEffect(() => {
+    if (!displayId) return;
 
-        if (error) { //ถ้าเจอ error ให้ log สาเหตุใส่ใน console
+    (async () => {
+      const { data, error } = await supabase
+        .from('game_tables')
+        .select('*')
+        .eq('id', displayId)
+        .single();
 
-            console.log('Error', error)
+      if (error || !data) {
 
-        } else { //ถ้าไม่เจอ error
+        console.log('dont find room')
+        setText('Dont find room')
 
-            console.log('Create Room Complete!', data.map((n) => { //log ว่าทำสำเร็จ แล้วบอกค่าเลขห้องมา โดยใช้ map วนใน json object แล้วเอาแค่ id ออกมา
-                return n.id;
-            }))
+        return;
 
-            setId(data.map((n) => { //set ค่า i เป็นค่า id ที่เราใช้ map วน
-                return n.id;
-            }))
+      };
+
+      if (data.player1_id && data.player2_id) {
+        setText('IN GAME');
+      } else {
+        setText('Waiting...');
+      }
+
+      try {
+        const bs = data.board_state;
+        const parsed = (typeof bs === 'string') ? JSON.parse(bs) : bs;
+        const board = Array.isArray(parsed) ? parsed : parsed.board;
+        setTable(board);
+      } catch { }
+      setTurn(data.current_turn);
+      setWinner(data.winner || '');
+
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayId]);
+
+
+  // --- REALTIME SUBSCRIBE (เพิ่มใหม่)
+  useEffect(() => {
+    if (!displayId) return;
+
+    const channel = supabase
+      .channel(`game_${displayId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'game_tables',
+          filter: `id=eq.${displayId}`
+        },
+
+        (payload) => {
+          const row = payload.new;
+
+          if (row.winner) {
+
+            setText(`Winner is ${row.winner}`);
+
+          }
+
+          else if (row.player1_id && row.player2_id) { // ถ้าคนก็ขึ้นว่า ingame และสามารถเล่นเกมได้
+            setClick(true)
+            setText('IN GAME');
+            
+          } else { // ถ้าคนไม่ครบให้ขึ้นว่าเล่นไม่ได้ และ คลิกทีตารางไม่ได้
+            setClick(false) 
+            setText('Waiting...');
+            
+          }
+
+          try {
+            const bs = row.board_state;
+            const parsed = (typeof bs === 'string') ? JSON.parse(bs) : bs;
+            const board = Array.isArray(parsed) ? parsed : parsed.board;
+
+            // ตั้งธงว่าการเปลี่ยนแปลงนี้มาจาก server → กันลูป persist
+            fromServerRef.current = true;
+            setTable(board);
+            setTurn(row.current_turn);
+            setWinner(row.winner || '');
+          } catch (e) {
+            console.error('Realtime parse error:', e);
+          }
         }
+      )
+      .subscribe((status) => {
+        console.log('Realtime status:', status);
+      });
 
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayId]);
+
+  useEffect(() => {
+    drawAll();
+
+    // เมื่อ table เปลี่ยน (จากคลิกหรือจาก realtime)
+    // ถ้ามาจาก realtime: reset ธงแล้วไม่ persist
+    if (fromServerRef.current) {
+      fromServerRef.current = false;
+      return;
     }
 
-    // update ฟังก์ชันอัพเดตค่าใน row เมื่อมีการ click เกิดขึ้น (ใช้ร้วมกับ useEffect table event)
+    // เช็คผลชนะ/เสมอ แล้ว persist สถานะขึ้น DB
+    let finalWinner = '';
+    if (winCheck()) {
 
-    const updateTable = async () => {
-        const { data, error } = await supabase 
-            .from('game_tables') // เรียก table ที่ชื่อ game_tables ใน supabase
-            .update({ board_state: tablejson, current_turn: turn, winner: winner }) // กำหนดค่าใน row 
-            .eq('id', id) // อ้างอิง id เพื่อแก้ไขข้อมูลให้ถูก row 
-            .select('*'); // เพิ่มข้อมูลเข้าไปทุกๆ row
+      finalWinner = turn;
+      setWinner(finalWinner);
+      setClick(false);
+    } else if (table.flat().every(cell => cell !== '')) {
 
-        if (error) { // ถ้า error ให้ log ค่าออกมา
-            console.error('Error updating user data:', error.message);
-        } else { // ถ้าไม่เจอก็บอกว่าสำเร็จ
-            console.log('User data updated successfully:', data);
-        }
-    };
-
-
-    const canvasRef = useRef(null);
-    const ctxRef = useRef(null);
-    const [click, setClick] = useState(true);
-
-    useEffect(() => {
-
-        const c = canvasRef.current;
-        const ctx = c.getContext("2d");
-        ctxRef.current = ctx;
-        drawAll();
-
-        createRoom(); // ใช้ฟังก์ชัน createRoom เมื่อมีการ mount 
-
-    }, []);
-
-    useEffect(() => {
-
-        fetchTable(); // ใช้ฟังก์ชัน fetchTable เมื่อค่าใน table เปลี่ยนแปลง
-        updateTable(); // ใช้ฟังก์ชัน updateTable เมื่อค่าใน table เปลี่ยนแปลง
-
-        drawAll();
-        if (winCheck()) {
-            alert(`Player ${turn} wins!`);
-            setWinner(turn)
-            setClick(false);
-        } else if (table.flat().every(cell => cell !== '')) {
-            alert('Draw');
-            setWinner('Draw')
-            setClick(false);
-        }
-
-        setTurn(turn === 'O' ? 'X' : 'O');
-
-        console.log(id);
-
-    }, [table]);
-
-    const handleClick = e => {
-        const x = e.nativeEvent.offsetX;
-        const y = e.nativeEvent.offsetY;
-
-        let col = Math.floor(x / cellSize);
-        let row = Math.floor(y / cellSize);
-
-        if (click && row < gridCount && table[row][col] === '') {
-            const newTable = table.map(r => [...r]);
-            newTable[row][col] = turn;
-            setTable(newTable);
-        }
-    };
-
-    const drawAll = () => {
-        const ctx = ctxRef.current;
-        ctx.clearRect(0, 0, 600, 700)
-        drawMarks();
-
+      finalWinner = 'Draw';
+      setWinner(finalWinner);
+      setClick(false);
     }
 
+    const nextTurn = (finalWinner || winner) ? turn : (turn === 'O' ? 'X' : 'O');
 
-    const drawMarks = () => {
-        const ctx = ctxRef.current;
+    // อัปเดต current_turn ให้เป็นคนถัดไป (ถ้ายังไม่มีผู้ชนะ)
+    persist({ board: table, currentTurn: nextTurn, finalWinner });
 
-        // ฟอนต์สเกลตาม cellSize
-        const fontPx = Math.floor(cellSize * 0.4);
-        ctx.font = `${fontPx}px Arial`;
+    // ตั้งตาถัดไปใน state ฝั่ง local (ถ้าเกมยังไม่จบ)
+    if (!finalWinner) setTurn(nextTurn);
 
-        for (let i = 0; i < gridCount; i++) {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table]);
 
-            for (let j = 0; j < gridCount; j++) {
+  const persist = async ({ board, currentTurn, finalWinner }) => {
 
-                const cx = j * cellSize + cellSize / 2.8; // ศูนย์กลางแกน X ของช่อง 
-                const cy = i * cellSize + cellSize / 1.5; // ศูนย์กลางแกน Y ของช่อง 
+    if (!displayId) return;
+    const payload = {
+      board_state: JSON.stringify({ grid_count: gridCount, board }),
+      current_turn: currentTurn,
+      winner: finalWinner || '',
+      status: text,
+    };
+    const { error } = await supabase
+      .from('game_tables')
+      .update(payload)
+      .eq('id', displayId);
+    if (error) console.error('Persist error:', error.message);
 
-                ctx.fillText(table[i][j], cx, cy);
+  };
 
-            }
+  const handleClick = e => {
 
-        }
+    if (!click) return;        
 
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
+
+    const col = Math.floor(x / cellSize);
+    const row = Math.floor(y / cellSize);
+
+    if (click && row < gridCount && table[row][col] === '') {
+      const newTable = table.map(r => [...r]);
+      newTable[row][col] = turn;
+      setTable(newTable);
+    }
+  };
+
+  const drawAll = () => {
+    const ctx = ctxRef.current;
+    ctx.clearRect(0, 0, 600, 700)
+    drawMarks();
+  }
+
+  const drawMarks = () => {
+    const ctx = ctxRef.current;
+    const fontPx = Math.floor(cellSize * 0.4);
+    ctx.font = `${fontPx}px Arial`;
+
+    for (let i = 0; i < gridCount; i++) {
+      for (let j = 0; j < gridCount; j++) {
+        const cx = j * cellSize + cellSize / 2.8;
+        const cy = i * cellSize + cellSize / 1.5;
+        ctx.fillText(table[i][j], cx, cy);
+      }
+    }
+  }
+
+  function arraySameCheck(arr) {
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0; j < arr.length; j++) {
+        if (arr[i] !== arr[j]) return false;
+      }
+    }
+    if (arr.includes('')) return false;
+    return true;
+  }
+
+  const winCheck = () => {
+    const row = table.length;
+    const checkBoard = [];
+
+    // แนวนอน
+    for (let i = 0; i < row; i++) {
+      for (let j = 0; j < row; j++) checkBoard.push(table[i][j]);
+      if (arraySameCheck(checkBoard)) return true;
+      checkBoard.length = 0;
     }
 
-    function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
-
-        for (let i = 0; i < arr.length; i++) {
-
-            for (let j = 0; j < arr.length; j++) {
-
-                if (arr[i] !== arr[j]) {
-
-
-                    return false; //ถ้าเจอไม่เหมือน return false
-                }
-
-            }
-        }
-
-        if (arr.includes('')) { //ถ้ามีฟันหนูซักอันใน array ที่ส่งเข้ามา return false
-
-            return false;
-
-        }
-
-        return true; //ถ้า array เหมือนกันทั้งหมด return true
-
+    // แนวตั้ง
+    for (let i = 0; i < row; i++) {
+      for (let j = 0; j < row; j++) checkBoard.push(table[j][i]);
+      if (arraySameCheck(checkBoard)) return true;
+      checkBoard.length = 0;
     }
 
-    const winCheck = () => {
+    // แนวทแยง \
+    for (let i = 0; i < row; i++) checkBoard.push(table[i][i]);
+    if (arraySameCheck(checkBoard)) return true;
+    checkBoard.length = 0;
 
-        let row = table.length; //3
-        const checkBoard = [];
+    // แนวทแยง /
+    for (let i = 0; i < row; i++) checkBoard.push(table[i][(row - 1) - i]);
+    if (arraySameCheck(checkBoard)) return true;
+    checkBoard.length = 0;
 
-        // แนวนอน
-        for (let i = 0; i < row; i++) { // column
+    return false;
+  };
 
-            for (let j = 0; j < row; j++) { // row  
+  const resetGame = () => {
+    setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
+    setTurn('O');
+    setClick(true);
+    // ล้างผลผู้ชนะใน DB ด้วย
+    persist({ board: Array.from({ length: gridCount }, () => Array(gridCount).fill('')), currentTurn: 'O', finalWinner: '' });
+  };
 
-                checkBoard.push(table[i][j]);
-
-            }
-            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-                console.log('แนวนอนชนะ');
-                return true;
-
-            }
-
-            checkBoard.length = 0;
-        }
-
-        for (let i = 0; i < row; i++) { // column
-
-            for (let j = 0; j < row; j++) { // row  
-
-                checkBoard.push(table[j][i]);
-
-            }
-            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-                console.log('แนวตั้งชนะ');
-                return true;
-
-            }
-
-            checkBoard.length = 0;
-        }
-
-        for (let i = 0; i < row; i++) { // column
-
-            checkBoard.push(table[i][i]);
-
-        }
-
-        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-            console.log('แนวเฉียงขวา');
-            return true;
-
-        }
-
-        checkBoard.length = 0;
-
-        for (let i = 0; i < row; i++) { // column
-
-            checkBoard.push(table[i][(row - 1) - i]);
-
-        }
-
-        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-            console.log('แนวเฉียงซ้าย');
-            return true;
-
-        }
-
-        checkBoard.length = 0;
+  return (
+    <>
+      <h2 style={{ display: 'inline' }}>Status : {text}</h2>
+      <h2 style={{ position: 'relative', left: '450px', bottom: '40px' }}>
+        Room ID : {displayId || 'creating...'}
+      </h2>
 
 
-
-    };
-
-    const resetGame = () => {
-        setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
-        setTurn('O');
-        setClick(true);
-    };
-
-    return (<>
-        
-        <h2 style={{position : 'relative' , left : 450 , bottom : 50}}>Room ID : {displayId || 'creating...'}</h2>
-        <canvas
-            ref={canvasRef}
-            width="600"
-            height="600"
-            style={{ position: "absolute", bottom : 40 , left : 12  }}
-            onClick={handleClick}
-        > </canvas>
-        <ResetButton onReset={resetGame} />
+      <canvas
+        ref={canvasRef}
+        width="600vh"
+        height="600vh"
+        style={{ position: "absolute",
+          pointerEvents: click ? "auto" : "none",
+          cursor: click ? "pointer" : "not-allowed",
+         }}
+        onClick={handleClick}
+      />
+      <ResetButton onReset={resetGame} />
     </>
-
-
-    )
+  )
 }
 
 export default GameLogic;

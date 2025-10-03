@@ -1,38 +1,61 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 import GameCanvas from "./components/GameCanvas";
 import GameLogicOnline from './components/Online/GameLogicOnline';
 import GameLogicLocal from './components/Local/GameLogicLocal';
-import './App.css'
+import './App.css';
 import GridInput from './components/GridInput';
 import ShowText from './components/ShowText';
-function Game({scene    }) {
 
-    
-    const [grid, setGrid] = useState(() => {
-        const saved = localStorage.getItem("grid");
-        const n = Number(saved);
-        return Number.isInteger(n) && n >= 3 ? n : 3; // ค่าเริ่มต้น
-    });
+export default function Game({ scene, setScene , player1 , player2 }) {
+  const [grid, setGrid] = useState(() => {
+    const saved = localStorage.getItem("grid");
+    const n = Number(saved);
+    return Number.isInteger(n) && n >= 3 ? n : 3; // ค่าเริ่มต้น
+  });
 
-    useEffect(() => {
-        localStorage.setItem("grid", String(grid));
-    }, [grid]);
+  useEffect(() => {
+    localStorage.setItem("grid", String(grid));
+  }, [grid]);
 
-    const [turn, setTurn] = useState('O');
+  const [turn, setTurn] = useState('O');
 
-    return (
-        <>
-            <ShowText turn={turn}/>
-            <GameCanvas gridProps={grid} />
+  // ปุ่มออกจากห้อง → ล้างค่า แล้วกลับเมนู
+  const leaveRoom = () => {
+    localStorage.removeItem('scene1');
+    localStorage.removeItem('roomId');
+    setScene(''); // กลับเมนู
+  };
 
-            {scene === 'Onlineplayer' ? <GameLogicOnline gridProps={grid} turn={turn} setTurn={setTurn} /> : null}
-            {scene === 'Singleplayer' ? <GameLogicLocal gridProps={grid} turn={turn} setTurn={setTurn} /> : null}
+  return (
+    <>
+      <div style={{ display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', width: 620, margin: '8px 0' }}>
+        <ShowText turn={turn} />
+        {scene === 'Onlineplayer' && (
+          <button onClick={leaveRoom} style={{ padding: '6px 10px', zIndex: 1000 }}>
+            ออกจากห้อง
+          </button>
+        )}
 
-            <GridInput grid={grid} setGrid={setGrid} />
+        {scene === 'Singleplayer' && (
+          <button onClick={leaveRoom} style={{ padding: '6px 10px', zIndex: 1000 }}>
+            ออกจากห้อง
+          </button>
+        )}
+      </div>
 
-        </>
-    )
-}
 
-export default Game
+      <GameCanvas gridProps={grid} sizeProps = {scene} />
+      {scene === 'Onlineplayer' ? (
+        <GameLogicOnline gridProps={grid} turn={turn} setTurn={setTurn} player1={player1} player2={player2}/>
+      ) : null}
+      {scene === 'Singleplayer' ? (
+        <GameLogicLocal gridProps={grid} turn={turn} setTurn={setTurn} />
+      ) : null}
+
+      <GridInput grid={grid} setGrid={setGrid} />
+    </>
+  );
+} 

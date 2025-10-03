@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 
-function GameCanvas( {gridProps}) {
+function GameCanvas( {gridProps , sizeProps}) {
+
+  const size = () => {
+    if (sizeProps === 'Onlineplayer') {
+      return '15vh'
+    } 
+  }
+
   useEffect(() => {
     const c = document.getElementById("myCanvas");
     const ctx = c.getContext("2d");
@@ -36,7 +43,7 @@ function GameCanvas( {gridProps}) {
       id="myCanvas"
       width="600"
       height="600"
-      style={{ border: "5px solid pink", position: "absolute" }}
+      style={{ border: "5px solid pink", position: "absolute" , top : size()}}
     ></canvas>
   );
 }
