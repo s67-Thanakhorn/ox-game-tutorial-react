@@ -42,24 +42,14 @@ function GameLogic({ gridProps , turn , setTurn}) {
         const c = canvasRef.current;
         const ctx = c.getContext("2d");
         ctxRef.current = ctx;
-        drawAll();
+        setTurn(1)
+        drawMarks();
 
     }, []);
 
     useEffect(() => {
 
-        drawAll();
-        if (winCheck()) {
-            alert(`Player ${turn} wins!`);
-
-            setClick(false);
-        } else if (table.flat().every(cell => cell !== '')) {
-            alert('Draw');
-
-            setClick(false);
-        }
-
-        setTurn(turn === 'O' ? 'X' : 'O');
+        drawMarks();
 
     }, [table]);
 
@@ -70,6 +60,12 @@ function GameLogic({ gridProps , turn , setTurn}) {
         let col = Math.floor(x / cellSize);
         let row = Math.floor(y / cellSize);
 
+        if(find(turn,row,col)){
+
+            alert(`แถวนี้เลข ${turn} ซ้ำ!`)
+            return;
+        }
+
         if (click && row < gridCount && table[row][col] === '') {
             const newTable = table.map(r => [...r]);
             newTable[row][col] = turn;
@@ -77,17 +73,9 @@ function GameLogic({ gridProps , turn , setTurn}) {
         }
     };
 
-    const drawAll = () => {
-        const ctx = ctxRef.current;
-        ctx.clearRect(0, 0, 600, 700)
-        drawMarks();
-
-    }
-
-
     const drawMarks = () => {
         const ctx = ctxRef.current;
-
+        ctx.clearRect(0, 0, 600, 700)
         // ฟอนต์สเกลตาม cellSize
         const fontPx = Math.floor(cellSize * 0.4);
         ctx.font = `${fontPx}px Arial`;
@@ -107,113 +95,54 @@ function GameLogic({ gridProps , turn , setTurn}) {
 
     }
 
-    function arraySameCheck(arr) { //check ว่า ทั้ง array นั้นเหมือนกันไหม (ใช้ร่วมกับ isWin())
+    const find = (x,r,c) => {
 
-        for (let i = 0; i < arr.length; i++) {
+        //เช็คแนวนอน
 
-            for (let j = 0; j < arr.length; j++) {
+        for(let i = 0 ; i < table.length ; i++){
 
-                if (arr[i] !== arr[j]) {
+            if(table[r][i] === x){
 
-
-                    return false; //ถ้าเจอไม่เหมือน return false
-                }
-
+                return true
             }
-        }
-
-        if (arr.includes('')) { //ถ้ามีฟันหนูซักอันใน array ที่ส่งเข้ามา return false
-
-            return false;
 
         }
 
-        return true; //ถ้า array เหมือนกันทั้งหมด return true
+        //เช็คแนวตั้ง
 
-    }
+        for(let i = 0 ; i < table.length ; i++){
 
-    const winCheck = () => {
+            if(table[i][c] === x){
 
-        let row = table.length; //3
-        const checkBoard = [];
-
-        // แนวนอน
-        for (let i = 0; i < row; i++) { // column
-
-            for (let j = 0; j < row; j++) { // row  
-
-                checkBoard.push(table[i][j]);
-
-            }
-            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-                console.log('แนวนอนชนะ');
-                return true;
+                return true
 
             }
 
-            checkBoard.length = 0;
         }
 
-        for (let i = 0; i < row; i++) { // column
-
-            for (let j = 0; j < row; j++) { // row  
-
-                checkBoard.push(table[j][i]);
-
-            }
-            if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-                console.log('แนวตั้งชนะ');
-                return true;
-
-            }
-
-            checkBoard.length = 0;
-        }
-
-        for (let i = 0; i < row; i++) { // column
-
-            checkBoard.push(table[i][i]);
-
-        }
-
-        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-            console.log('แนวเฉียงขวา');
-            return true;
-
-        }
-
-        checkBoard.length = 0;
-
-        for (let i = 0; i < row; i++) { // column
-
-            checkBoard.push(table[i][(row - 1) - i]);
-
-        }
-
-        if (arraySameCheck(checkBoard) === true) { //เช็คว่า checkBoard ทั้งarrayเหมือนกันไหม 
-
-            console.log('แนวเฉียงซ้าย');
-            return true;
-
-        }
-
-        checkBoard.length = 0;
-
-
+        return false
 
     };
 
     const resetGame = () => {
         setTable(Array.from({ length: gridCount }, () => Array(gridCount).fill('')));
-        setTurn('O');
+
         setClick(true);
     };
 
     return (<>
         
+        <form style={{position : 'relative', bottom : 30}} >
+
+            <input type="number" 
+            placeholder='Enter number'
+            value={turn}
+            onChange={(e)=>{setTurn(e.target.value)}}
+            
+            />
+
+        </form>
+
         <canvas
         ref={canvasRef}
         width="600vh"
